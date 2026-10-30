@@ -1,0 +1,57 @@
+# 가상환경
+**/.venv/
+**/venv/
+**/env/
+
+# 환경 변수 (보안)
+**/.env
+**/.env.*
+#  .env.example 은 git에 올리도록 예외 처리 (! = "무시하지 말 것")
+#  - 위의 **/.env.* 규칙 때문에 .env.example 까지 무시되고 있었음
+#  - .env.example: 실제 값 없이 "어떤 환경 변수가 필요한지"만 적어둔 안내 파일
+#    => 팀원이 이 파일을 복사해서 자신의 .env를 만들 수 있음 (비밀값은 절대 적지 않기!)
+!**/.env.example
+
+# 클로드
+**/.claude/
+
+# 파이썬 캐시
+**/*.py[cod]
+**/__pycache__/
+**/*.so
+
+# 린트/타입체크 캐시 (ruff, mypy) 
+**/.ruff_cache/
+**/.mypy_cache/
+
+# 테스트/커버리지 캐시 (pytest 도입 대비) 
+**/.pytest_cache/
+**/.coverage
+**/htmlcov/
+
+# 로그 파일 
+**/*.log
+
+# IDE 설정
+**/.vscode/
+**/.idea/
+
+## 의존성
+**/node_modules/
+**/dist/
+**/.next/
+**/out/
+**/*.egg-info/
+
+
+## macOS
+**/.DS_Store
+
+## 학습 데이터
+# 평가용 사진 (용량이 커서 git 제외 / 정답표 manifest.csv는 git에 포함)
+**/eval_data/**/*.png
+**/eval_data/**/*.jpg
+**/eval_data/**/*.jpeg
+**/eval_data/**/*.webp
+# [신규] 실험 스크립트(experiments/)가 만드는 확인용 사진·결과 파일 (실행할 때마다 다시 만들어짐)
+**/eval_data/**/_output/

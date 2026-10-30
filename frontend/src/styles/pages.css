@@ -1,0 +1,322 @@
+/*
+ * 화면별 스타일 (화면 제목, 사용자·권한 관리, 내 계정, 준비중)
+ */
+
+/* ===== 1. 화면 제목 영역 ===== */
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding-bottom: 24px;
+  margin-bottom: 28px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+/* 제목과 설명을 한 줄에 (글자 아래선을 맞춤) */
+.page-heading {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.page-title {
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.page-description {
+  color: var(--color-text-secondary);
+  font-size: 14px;
+}
+
+.page-actions {
+  display: flex;
+  gap: 8px;
+}
+
+/* ===== 2. 검색 조건 영역 (사용자·권한 관리) ===== */
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  padding: 18px 24px;
+}
+
+/* 상태 탭 (전체 / 활성화 / 비활성화) */
+.segmented {
+  display: inline-flex;
+  padding: 4px;
+  background: var(--color-surface-muted);
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+}
+
+.segmented button {
+  display: inline-flex;
+  align-items: center;
+  height: 32px;
+  padding: 0 16px;
+  border-radius: 7px;
+  color: var(--color-text-secondary);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.segmented button:hover {
+  color: var(--color-text);
+}
+
+.segmented button.is-active {
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-weight: 700;
+  box-shadow: var(--shadow-sm);
+}
+
+/* 비활성화 탭 옆 빨간 숫자 */
+.tab-count {
+  margin-left: 6px;
+  padding: 0 7px;
+  border-radius: 999px;
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.search-form {
+  display: flex;
+  gap: 8px;
+}
+
+.search-input {
+  width: 260px;
+}
+
+/* ===== 3. 표 ===== */
+.table-wrap {
+  overflow-x: auto; /* 화면이 좁으면 표만 가로 스크롤 */
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.data-table th {
+  height: 48px;
+  padding: 0 16px;
+  background: var(--color-surface-muted);
+  border-top: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--color-border);
+  font-size: 14px;
+  font-weight: 600;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.data-table td {
+  height: 60px;
+  padding: 0 16px;
+  border-bottom: 1px solid var(--color-border);
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.data-table tbody tr:hover td {
+  background: var(--color-surface-muted);
+}
+
+.data-table .col-id {
+  width: 80px;
+  padding-left: 32px;
+  color: var(--color-text-secondary);
+}
+
+.data-table .col-center {
+  text-align: center;
+}
+
+.cell-email {
+  font-weight: 600;
+}
+
+/* 날짜는 숫자 폭을 똑같이 맞춰서 세로 줄이 반듯하게 보이도록 */
+.cell-date {
+  color: var(--color-text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+/* 내 계정 표시 ("나") */
+.me-badge {
+  margin-left: 8px;
+  padding: 2px 7px;
+  border-radius: var(--radius-sm);
+  background: var(--tone-blue-bg);
+  color: var(--tone-blue-text);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.table-empty {
+  height: 160px !important;
+  color: var(--color-text-muted);
+  text-align: center;
+}
+
+.table-empty.is-error {
+  color: var(--tone-red-text);
+}
+
+/* 표 아래 (전체 건수 + 페이지 이동) */
+.table-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 16px 24px;
+  color: var(--color-text-secondary);
+  font-size: 13px;
+}
+
+.table-footer strong {
+  color: var(--color-text);
+}
+
+/* ===== 4. 페이지 번호 ===== */
+.pagination {
+  display: flex;
+  gap: 6px;
+}
+
+.page-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 38px;
+  height: 38px;
+  padding: 0 8px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-weight: 600;
+}
+
+.page-btn:hover:not(:disabled):not(.is-active) {
+  background: var(--color-hover);
+}
+
+.page-btn:disabled {
+  color: var(--color-text-muted);
+}
+
+/* 현재 페이지: 검정(다크 모드에서는 흰색) 배경 */
+.page-btn.is-active {
+  background: var(--color-text);
+  border-color: var(--color-text);
+  color: var(--color-surface);
+}
+
+/* ===== 5. 내 계정 ===== */
+.account-grid {
+  display: grid;
+  /* 화면이 넓으면 2칸, 좁으면 1칸 (min(): 모바일에서 칸이 화면보다 넓어지는 것 방지) */
+  grid-template-columns: repeat(auto-fit, minmax(min(380px, 100%), 1fr));
+  gap: 24px;
+  align-items: start;
+}
+
+.info-list {
+  padding: 8px 24px 12px;
+}
+
+.info-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 52px;
+  border-bottom: 1px dashed var(--color-border);
+}
+
+.info-row:last-child {
+  border-bottom: none;
+}
+
+.info-row dt {
+  color: var(--color-text-secondary);
+}
+
+.info-row dd {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ===== 6. 준비중 화면 ===== */
+.coming-soon {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 88px 24px;
+  text-align: center;
+}
+
+.coming-soon-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  margin-bottom: 8px;
+  border-radius: 16px;
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
+}
+
+.coming-soon-title {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.coming-soon-desc {
+  color: var(--color-text-secondary);
+}
+
+/* ===== 7. 화면 폭에 따른 조정 (반응형) ===== */
+@media (max-width: 768px) {
+  .page-header {
+    padding-bottom: 16px;
+    margin-bottom: 20px;
+  }
+
+  .page-title {
+    font-size: 20px;
+  }
+
+  .card-header,
+  .toolbar,
+  .table-footer {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .search-form {
+    flex: 1 1 100%;
+  }
+
+  .search-input {
+    flex: 1;
+    width: auto;
+    min-width: 0;
+  }
+}

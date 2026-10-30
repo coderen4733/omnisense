@@ -1,0 +1,112 @@
+/*
+ * 로그인 / 회원가입 화면 스타일
+ */
+
+.auth-page {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 64px 16px 32px;
+  background: var(--color-bg);
+}
+
+/* 오른쪽 위 다크모드 버튼 */
+.auth-theme-toggle {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 420px;
+  padding: 40px 36px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  box-shadow: var(--shadow-md);
+}
+
+/* [수정] * 로그인 화면 로고 영역 변경 [2026-10-28 17:57]
+   [기존] .auth-card .logo { margin-bottom: 36px } => 글자 로고만 있었음
+   [변경] OS 심볼 + 글자 로고를 가로로 나란히, 카드 가운데에 배치 (아래 여백은 이 영역으로 옮김) */
+.auth-brand {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  margin-bottom: 36px;
+}
+
+.auth-title {
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.auth-desc {
+  margin-top: 6px;
+  margin-bottom: 24px;
+  color: var(--color-text-secondary);
+  font-size: 14px;
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.auth-form .btn-primary {
+  margin-top: 8px;
+}
+
+.auth-footer {
+  margin-top: 24px;
+  color: var(--color-text-secondary);
+  font-size: 14px;
+  text-align: center;
+}
+
+.auth-footer a {
+  margin-left: 4px;
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+.auth-footer a:hover {
+  text-decoration: underline;
+}
+
+.auth-copyright {
+  margin-top: 24px;
+  color: var(--color-text-muted);
+  font-size: 12px;
+}
+
+/* 회원가입 완료 화면 */
+.auth-success {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.auth-success-icon {
+  margin-bottom: 16px;
+  color: var(--tone-green-text);
+}
+
+@media (max-width: 480px) {
+  .auth-card {
+    padding: 32px 20px;
+  }
+
+  /* [수정] 모바일에서는 가로 공간이 부족하므로 OS 심볼을 글자 로고 위에 쌓아서 표시 [2026-10-28 17:57] */
+  .auth-brand {
+    flex-direction: column;
+    gap: 12px;
+  }
+}

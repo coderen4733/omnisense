@@ -1,0 +1,532 @@
+/*
+ * 레이아웃 스타일 (헤더, 사이드바, 본문 영역, 로고)
+ */
+
+/* ===== 1. 전체 틀 ===== */
+.app-shell {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.app-body {
+  display: flex;
+  flex: 1;
+}
+
+.app-main {
+  flex: 1;
+  min-width: 0; /* 표가 넓어도 본문 영역이 화면 밖으로 밀려나지 않도록 */
+  padding: 28px 32px 48px;
+}
+
+/* ===== 2. 로고 ===== */
+/* [수정] * 로고 아래 문구 정렬 방식 변경 [2026-10-28 17:35]
+   [기존] 문구가 로고 영역 폭만큼 늘어나 있었습니다.
+   [변경] align-items: flex-start => 문구가 "글자 폭"만큼만 차지하도록 하여,
+          Logo.tsx에서 문구의 실제 폭을 재고 로고 양끝에 맞출 수 있게 합니다. */
+.logo {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  line-height: 1.1;
+}
+
+.logo-title {
+  color: var(--color-logo-text);
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}
+
+/* UNION 중 "IO"만 빨간색 */
+.logo-accent {
+  color: var(--color-brand-red);
+}
+
+.logo-product {
+  margin-left: 6px;
+}
+
+/* [수정] * 로고 아래 문구 색상/간격 변경 [2026-10-28 17:35]
+   [기존] 회색 글자 + 고정 글자 간격(letter-spacing: 0.01em)이었습니다.
+   [변경] 보라색 글자로 바꾸고, 글자 간격은 Logo.tsx가 로고 폭에 맞춰 자동으로 계산합니다. */
+.logo-subtitle {
+  margin-top: 3px;
+  color: var(--color-brand-purple);
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* 로그인 화면용 큰 로고 (가운데 정렬) */
+.logo-lg {
+  align-items: center;
+}
+
+.logo-lg .logo-title {
+  font-size: 30px;
+}
+
+.logo-lg .logo-subtitle {
+  margin-top: 6px;
+  font-size: 13px;
+}
+
+/* ===== 3. 헤더 ===== */
+.app-header {
+  position: sticky; /* 스크롤해도 화면 위에 고정 */
+  top: 0;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: var(--header-height);
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+}
+
+/* [수정] * 헤더 왼쪽 배치 변경 (로고 => 구분선 => 메뉴 접기 버튼 => 현재 위치) [2026-10-28 17:35]
+   [기존] 헤더 왼쪽 여백(padding-left: 24px) + 항목 사이 간격(gap: 16px)으로 배치하여
+          구분선 위치가 로고 길이에 따라 달라졌습니다.
+   [변경] 로고 영역(.header-brand)의 폭을 사이드바 폭과 똑같이 고정하여,
+          바로 뒤의 구분선이 아래 사이드바의 오른쪽 경계선과 일직선이 됩니다.
+          (메뉴를 접으면 사이드바가 좁아지므로, 접힌 상태에서는 일직선이 아닙니다) */
+.header-left {
+  display: flex;
+  align-items: center;
+  height: 100%;
+  min-width: 0;
+}
+
+/* 로고 영역: 폭 = 사이드바 폭 - 1px (마지막 1px 자리에 구분선이 와서 사이드바 경계선과 겹침) */
+.header-brand {
+  display: flex;
+  align-items: center;
+  flex: none;
+  width: calc(var(--sidebar-width) - 1px);
+  height: 100%;
+  /* [수정] * OS 심볼 추가에 맞춰 로고 영역 여백/애니메이션 변경 [2026-10-28 17:54]
+     [기존] padding-left: 24px (글자 로고만 있었음)
+     [변경] 왼쪽 여백 = (접힌 메뉴 폭 - 심볼 크기) / 2
+            => 메뉴를 접었을 때 심볼이 접힌 메뉴의 정가운데에 오고, 펼쳐도 심볼 위치가 그대로임
+            - gap: 심볼과 글자 로고 사이 간격
+            - overflow: hidden: 펼치는 애니메이션 도중 글자 로고가 영역 밖으로 삐져나오지 않게 가림
+            - transition: 사이드바와 같은 속도(0.2초)로 폭이 바뀜 */
+  padding-left: calc((var(--sidebar-collapsed-width) - 1px - var(--logo-mark-size)) / 2);
+  gap: 10px;
+  overflow: hidden;
+  transition: width 0.2s ease;
+}
+
+/* [수정] 메뉴가 접혔을 때의 로고 영역 (OS 심볼만 표시) [2026-10-28 17:54]
+   - 접힌 메뉴 폭(72px)으로 줄어듦 => 구분선이 접힌 사이드바 경계선과도 일직선 */
+.header-brand.is-collapsed {
+  width: calc(var(--sidebar-collapsed-width) - 1px);
+}
+
+/* [수정] OS 심볼 (빨간 박스 + 흰 글자) 스타일 추가 [2026-10-28 17:54]
+   - 크기(--logo-mark-size)는 두 줄짜리 글자 로고 높이에 맞춤 */
+.logo-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: var(--logo-mark-size);
+  height: var(--logo-mark-size);
+  border-radius: 9px;
+  background: var(--color-brand-red);
+  color: #ffffff;
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+
+/* [수정] 로그인 화면용 큰 OS 심볼 추가 [2026-10-28 17:57]
+   - 큰 글자 로고(제목 30px + 문구 13px) 높이에 맞춤, 모서리/글자 비율은 헤더용과 동일 */
+.logo-mark-lg {
+  width: 52px;
+  height: 52px;
+  border-radius: 13px;
+  font-size: 23px;
+}
+
+/* 메뉴 접기 버튼 (구분선 오른쪽) */
+.header-toggle {
+  margin: 0 8px 0 12px;
+}
+
+.header-divider {
+  flex: none;
+  width: 1px;
+  height: 24px;
+  background: var(--color-border);
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 100%;
+}
+
+/* 알림 버튼 위 빨간 숫자 */
+.notify-badge {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border: 2px solid var(--color-surface);
+  border-radius: 999px;
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+/* ===== 4. 현재 위치 (브레드크럼) ===== */
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--color-text-secondary);
+  font-size: 15px;
+  white-space: nowrap;
+}
+
+.breadcrumb-sep {
+  flex: none;
+  color: var(--color-text-muted);
+}
+
+.breadcrumb-current {
+  color: var(--color-text);
+  font-weight: 700;
+}
+
+/* ===== 5. 사용자 메뉴 (헤더 오른쪽) ===== */
+.user-menu {
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: 100%;
+  margin-left: 12px;
+  border-left: 1px solid var(--color-border);
+}
+
+.user-menu-trigger {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 100%;
+  padding: 0 20px 0 24px;
+  text-align: left;
+  transition: background-color 0.15s;
+}
+
+.user-menu-trigger:hover {
+  background: var(--color-hover);
+}
+
+/* 동그라미 안 첫 글자 */
+.avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
+  font-weight: 700;
+}
+
+.user-info {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.3;
+}
+
+.user-name {
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.user-meta {
+  color: var(--color-text-secondary);
+  font-size: 12px;
+}
+
+.user-chevron {
+  margin-left: 12px;
+  color: var(--color-text-secondary);
+}
+
+/* 사용자 메뉴를 눌렀을 때 열리는 목록 */
+.dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 12px;
+  z-index: 50;
+  min-width: 220px;
+  padding: 6px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  box-shadow: var(--shadow-md);
+}
+
+.dropdown-header {
+  padding: 8px 10px 10px;
+  margin-bottom: 4px;
+  border-bottom: 1px solid var(--color-border);
+  color: var(--color-text-secondary);
+  font-size: 13px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 9px 10px;
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  text-align: left;
+}
+
+.dropdown-item:hover {
+  background: var(--color-hover);
+}
+
+.dropdown-item.is-danger {
+  color: var(--tone-red-text);
+}
+
+/* ===== 6. 사이드바 ===== */
+.sidebar {
+  position: sticky; /* 본문을 스크롤해도 메뉴는 고정 */
+  top: var(--header-height);
+  display: flex;
+  flex-direction: column;
+  flex: none;
+  width: var(--sidebar-width);
+  height: calc(100vh - var(--header-height));
+  background: var(--color-sidebar);
+  border-right: 1px solid var(--color-border);
+  transition: width 0.2s ease;
+}
+
+.sidebar.is-collapsed {
+  width: var(--sidebar-collapsed-width);
+}
+
+.sidebar-top {
+  padding: 16px 12px 8px;
+}
+
+/* 새 워크플로우 버튼
+   [수정] * 버튼 색상을 빨간색 => 보라색(#6D4AFF)으로 변경 [2026-10-28 17:59]
+   [기존] background: var(--color-primary) (빨간색) => 바로 위 헤더의 빨간 OS 심볼과 색이 겹쳐 보였습니다.
+   [변경] background: var(--color-accent) (보라색), 마우스를 올리면 var(--color-accent-hover) */
+.sidebar-new-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 44px;
+  border-radius: var(--radius-md);
+  background: var(--color-accent);
+  color: #ffffff;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: background-color 0.15s;
+}
+
+.sidebar-new-btn:hover {
+  background: var(--color-accent-hover);
+}
+
+.sidebar-nav {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 12px;
+  overflow-y: auto; /* 메뉴가 많으면 메뉴 영역만 스크롤 */
+}
+
+.sidebar-bottom {
+  padding: 12px;
+  border-top: 1px solid var(--color-border);
+}
+
+/* 메뉴 1개 */
+.sidebar-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  height: 42px;
+  padding: 0 12px;
+  border-radius: var(--radius-md);
+  color: var(--color-text);
+  font-size: 15px;
+  font-weight: 500;
+  white-space: nowrap;
+  transition: background-color 0.15s;
+}
+
+.sidebar-link:hover {
+  background: var(--color-hover);
+}
+
+/* 현재 화면의 메뉴: 흰 카드처럼 떠 보이게 */
+.sidebar-link.is-active {
+  background: var(--color-surface);
+  box-shadow: var(--shadow-sm);
+  font-weight: 700;
+}
+
+/* 개발 전 메뉴: 흐리게 */
+.sidebar-link.is-pending {
+  color: var(--color-text-muted);
+}
+
+/* 그룹 안의 하위 메뉴 */
+.sidebar-link.is-nested {
+  padding-left: 24px;
+}
+
+.sidebar-icon {
+  flex: none;
+}
+
+.sidebar-label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: left;
+}
+
+/* "준비중" 배지 */
+.sidebar-badge {
+  flex: none;
+  padding: 1px 8px;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  font-size: 11px;
+  font-weight: 500;
+}
+
+/* 그룹 제목 (설정 ▴) */
+.sidebar-group {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sidebar-group-header {
+  font-weight: 600;
+}
+
+.sidebar-chevron {
+  flex: none;
+  color: var(--color-text-secondary);
+}
+
+.sidebar-sublist {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* 접힌 메뉴에서 그룹 사이 구분선 */
+.sidebar-divider {
+  height: 1px;
+  margin: 6px 8px;
+  background: var(--color-border);
+}
+
+/* 접힌 메뉴: 아이콘만 가운데 정렬 */
+.sidebar.is-collapsed .sidebar-link,
+.sidebar.is-collapsed .sidebar-new-btn {
+  justify-content: center;
+  padding: 0;
+}
+
+/* ===== 7. 화면 폭에 따른 조정 (반응형) ===== */
+@media (max-width: 1024px) {
+  .user-info,
+  .user-chevron {
+    display: none;
+  }
+
+  .user-menu-trigger {
+    padding: 0 16px;
+  }
+}
+
+@media (max-width: 768px) {
+  /* [수정] 모바일 헤더 왼쪽 배치 변경 [2026-10-28 17:35]
+     [기존] 헤더 왼쪽 여백과 항목 간격(gap)을 줄였습니다.
+     [변경] 로고 영역을 고정 폭 대신 글자 폭만큼만 차지하게 합니다. (화면이 좁아 오른쪽 버튼 공간 확보) */
+  .header-brand {
+    width: auto;
+    padding-left: 16px;
+  }
+
+  .header-toggle {
+    margin-left: 8px;
+  }
+
+  .logo-title {
+    font-size: 17px;
+  }
+
+  .logo-subtitle,
+  .header-divider,
+  .breadcrumb {
+    display: none;
+  }
+
+  .header-right {
+    gap: 0;
+  }
+
+  .user-menu {
+    margin-left: 4px;
+  }
+
+  .user-menu-trigger {
+    padding: 0 12px;
+  }
+
+  .app-main {
+    padding: 20px 16px 32px;
+  }
+
+  /* 모바일에서 펼친 메뉴는 본문 위에 겹쳐서 표시 */
+  .sidebar:not(.is-collapsed) {
+    position: fixed;
+    left: 0;
+    z-index: 40;
+    box-shadow: var(--shadow-lg);
+  }
+}

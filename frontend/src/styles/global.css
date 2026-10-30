@@ -1,0 +1,665 @@
+/*
+ * 전역 스타일 (모든 화면에 공통 적용)
+ *  - :root              : 라이트 모드 색상 변수(디자인 토큰)
+ *  - [data-theme='dark'] : 다크 모드 색상 변수 (ThemeContext가 <html data-theme="dark">로 전환)
+ *  - 색상은 반드시 var(--color-...) 변수로 사용해야 다크 모드가 자동으로 적용됨
+ */
+
+/* ===== 1. 색상/크기 변수 (라이트 모드) ===== */
+:root {
+  color-scheme: light; /* 스크롤바, 기본 입력창 등 브라우저 기본 요소도 라이트 모드로 */
+
+  /* 배경 */
+  --color-bg: #f6f7f9; /* 페이지 배경 */
+  --color-surface: #ffffff; /* 카드, 헤더, 팝업 배경 */
+  --color-surface-muted: #f9fafb; /* 표 머리글, 탭 배경 */
+  --color-sidebar: #f6f7f9; /* 사이드바 배경 */
+  --color-hover: #eef0f3; /* 마우스를 올렸을 때 배경 */
+
+  /* 테두리 */
+  --color-border: #e5e7eb;
+  --color-border-strong: #d1d5db;
+
+  /* 글자 */
+  --color-text: #111827; /* 기본 글자 */
+  --color-text-secondary: #4b5563; /* 보조 설명 */
+  --color-text-muted: #9ca3af; /* 흐린 글자 (비활성, 안내) */
+
+  /* 브랜드 / 주요 버튼 */
+  --color-brand-red: #e11d2a; /* 로고 "IO" 색상 */
+  --color-logo-text: #111111; /* 로고의 나머지 글자 */
+  /* [수정] * 로고 아래 문구 색상 추가 [2026-10-28 17:35]
+     [기존] 로고 아래 문구는 회색(--color-text-secondary)이었습니다.
+     [변경] 보라색(--color-brand-purple)을 새로 만들어 사용합니다. */
+  --color-brand-purple: #6b46e5; /* 로고 아래 "AI Agent Orchestration Platform" 색상 */
+  /* [수정] * 보라색 버튼 색상 추가 [2026-10-28 17:59]
+     [기존] 없음 (새 워크플로우 버튼도 빨간색 --color-primary 사용)
+     [변경] 빨간 OS 심볼과 색이 겹치지 않도록 보라색 버튼 색상을 새로 만듦 (라이트/다크 모드 공통)
+            - 흰 글자와의 명암 대비 약 5:1 => 글자가 잘 읽히는 기준(4.5:1) 충족 */
+  --color-accent: #6d4aff; /* 보라색 버튼 배경 (예: 새 워크플로우) */
+  --color-accent-hover: #5a36f0; /* 보라색 버튼에 마우스를 올렸을 때 (조금 더 진하게) */
+  --color-primary: #dc2626;
+  --color-primary-hover: #b91c1c;
+  --color-primary-soft: #fdecec;
+  --color-on-primary: #ffffff; /* 빨간 버튼 위 글자 */
+
+  /* 알약(pill) 색상 - 배경 / 글자 */
+  --tone-gray-bg: #f1f2f4;
+  --tone-gray-text: #4b5563;
+  --tone-blue-bg: #e8f0fe;
+  --tone-blue-text: #2563eb;
+  --tone-red-bg: #fdecec;
+  --tone-red-text: #dc2626;
+  --tone-green-bg: #e6f6ec;
+  --tone-green-text: #15803d;
+  --tone-orange-bg: #fdeee4;
+  --tone-orange-text: #c2410c;
+
+  /* 그림자 */
+  --shadow-sm: 0 1px 2px rgba(16, 24, 40, 0.06);
+  --shadow-md: 0 6px 20px rgba(16, 24, 40, 0.1);
+  --shadow-lg: 0 16px 40px rgba(16, 24, 40, 0.16);
+
+  /* 모서리 둥글기 */
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 14px;
+
+  /* 레이아웃 크기 */
+  --header-height: 64px;
+  --sidebar-width: 248px;
+  --sidebar-collapsed-width: 72px;
+  --logo-mark-size: 36px; /* [수정] OS 심볼 크기 추가 [2026-10-28 17:54] */
+}
+
+/* ===== 2. 색상 변수 (다크 모드) - 바뀌는 값만 다시 정의 ===== */
+[data-theme='dark'] {
+  color-scheme: dark;
+
+  --color-bg: #0f1115;
+  --color-surface: #171a21;
+  --color-surface-muted: #1d212a;
+  --color-sidebar: #13161c;
+  --color-hover: #232834;
+
+  --color-border: #2a2f3a;
+  --color-border-strong: #3a4150;
+
+  --color-text: #e5e7eb;
+  --color-text-secondary: #a3a9b5;
+  --color-text-muted: #6b7280;
+
+  --color-brand-red: #f0333d;
+  --color-logo-text: #f3f4f6; /* 다크 모드에서는 검정 글자가 보이지 않으므로 흰색 계열 */
+  /* [수정] 다크 모드용 보라색 추가 [2026-10-28 17:35] - 어두운 배경에서 잘 보이도록 밝은 보라색 */
+  --color-brand-purple: #a78bfa;
+  --color-primary: #ef4444;
+  --color-primary-hover: #dc2626;
+  --color-primary-soft: rgba(239, 68, 68, 0.16);
+
+  --tone-gray-bg: rgba(255, 255, 255, 0.08);
+  --tone-gray-text: #cbd5e1;
+  --tone-blue-bg: rgba(59, 130, 246, 0.18);
+  --tone-blue-text: #93c5fd;
+  --tone-red-bg: rgba(239, 68, 68, 0.18);
+  --tone-red-text: #fca5a5;
+  --tone-green-bg: rgba(34, 197, 94, 0.16);
+  --tone-green-text: #86efac;
+  --tone-orange-bg: rgba(249, 115, 22, 0.18);
+  --tone-orange-text: #fdba74;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 6px 20px rgba(0, 0, 0, 0.45);
+  --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.55);
+}
+
+/* ===== 3. 기본 요소 초기화 ===== */
+*,
+*::before,
+*::after {
+  box-sizing: border-box; /* width에 padding, border까지 포함해서 계산 */
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family:
+    'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont, system-ui,
+    'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--color-text);
+  background: var(--color-bg);
+  -webkit-font-smoothing: antialiased;
+  transition:
+    background-color 0.2s,
+    color 0.2s;
+}
+
+h1,
+h2,
+h3,
+p,
+dl,
+dd {
+  margin: 0;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
+
+input,
+select {
+  font: inherit;
+  color: inherit;
+}
+
+/* 키보드(Tab)로 이동했을 때만 초점 테두리 표시 */
+:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* ===== 4. 버튼 ===== */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 42px;
+  padding: 0 18px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+  transition:
+    background-color 0.15s,
+    border-color 0.15s;
+}
+
+.btn:disabled {
+  opacity: 0.6;
+}
+
+/* 빨간 주요 버튼 (예: 사용자 생성, 로그인) */
+.btn-primary {
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: var(--color-primary-hover);
+}
+
+/* 흰 바탕 + 테두리 버튼 (예: 새로고침, 검색) */
+.btn-outline {
+  background: var(--color-surface);
+  border-color: var(--color-border-strong);
+  color: var(--color-text);
+}
+
+.btn-outline:hover:not(:disabled) {
+  background: var(--color-hover);
+}
+
+.btn-sm {
+  height: 36px;
+  padding: 0 12px;
+  font-size: 13px;
+}
+
+.btn-lg {
+  height: 48px;
+  font-size: 15px;
+}
+
+.btn-block {
+  width: 100%;
+}
+
+/* 아이콘만 있는 정사각형 버튼 (예: 다크모드, 알림, 메뉴 접기) */
+.icon-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  flex: none;
+  border-radius: var(--radius-md);
+  color: var(--color-text-secondary);
+  transition: background-color 0.15s;
+}
+
+.icon-btn:hover {
+  background: var(--color-hover);
+  color: var(--color-text);
+}
+
+/* ===== 5. 입력창 / 선택 상자 ===== */
+.input {
+  height: 42px;
+  padding: 0 14px;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-size: 14px;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
+}
+
+.input::placeholder {
+  color: var(--color-text-muted);
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-primary-soft);
+}
+
+/* 선택 상자: 브라우저 기본 화살표를 숨기고 아이콘으로 대체 */
+.select-wrap {
+  position: relative;
+  display: inline-flex;
+}
+
+.select {
+  appearance: none;
+  min-width: 132px;
+  padding-right: 40px;
+  cursor: pointer;
+}
+
+.select-icon {
+  position: absolute;
+  top: 50%;
+  right: 14px;
+  transform: translateY(-50%);
+  color: var(--color-text-secondary);
+  pointer-events: none; /* 아이콘을 눌러도 select가 열리도록 클릭을 통과시킴 */
+}
+
+/* 왼쪽에 아이콘이 있는 입력창 (이메일, 비밀번호) */
+.input-with-icon {
+  position: relative;
+  display: flex;
+}
+
+.input-with-icon .input {
+  width: 100%;
+  padding-left: 42px;
+}
+
+.input-with-icon .input.has-action {
+  padding-right: 46px;
+}
+
+.input-icon {
+  position: absolute;
+  top: 50%;
+  left: 14px;
+  transform: translateY(-50%);
+  color: var(--color-text-muted);
+  pointer-events: none;
+}
+
+/* 입력창 오른쪽 버튼 (비밀번호 보기/숨기기) */
+.input-action {
+  position: absolute;
+  top: 50%;
+  right: 6px;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-sm);
+  color: var(--color-text-muted);
+}
+
+.input-action:hover {
+  color: var(--color-text);
+  background: var(--color-hover);
+}
+
+/* 입력 항목 (라벨 + 입력창 + 안내) */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.field-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+}
+
+.field-hint {
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+.form-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* 입력 오류 메시지 상자 */
+.form-error {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: var(--radius-md);
+  background: var(--tone-red-bg);
+  color: var(--tone-red-text);
+  font-size: 13px;
+}
+
+.form-error svg {
+  flex: none;
+  margin-top: 2px;
+}
+
+/* ===== 6. 카드 ===== */
+.card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.card-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.card-body {
+  padding: 24px;
+}
+
+/* 제목 옆 숫자 동그라미 (예: 사용자 목록 7) */
+.count-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 28px;
+  height: 28px;
+  padding: 0 8px;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+/* ===== 7. 알약(pill) 배지 ===== */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 28px;
+  padding: 0 12px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.pill-gray {
+  background: var(--tone-gray-bg);
+  color: var(--tone-gray-text);
+  border-color: var(--color-border);
+}
+
+.pill-blue {
+  background: var(--tone-blue-bg);
+  color: var(--tone-blue-text);
+}
+
+.pill-red {
+  background: var(--tone-red-bg);
+  color: var(--tone-red-text);
+}
+
+.pill-green {
+  background: var(--tone-green-bg);
+  color: var(--tone-green-text);
+}
+
+.pill-orange {
+  background: var(--tone-orange-bg);
+  color: var(--tone-orange-text);
+}
+
+/* 클릭 가능한 알약 (화살표 ▾ 있음) */
+.pill.is-clickable {
+  padding-right: 8px;
+  transition: filter 0.15s;
+}
+
+.pill.is-clickable:hover:not(:disabled) {
+  filter: brightness(0.95);
+}
+
+.pill.is-clickable:disabled {
+  opacity: 0.6;
+}
+
+/* 알약을 눌렀을 때 열리는 선택 메뉴 */
+.pill-menu {
+  position: fixed;
+  z-index: 100;
+  transform: translateX(-50%); /* 버튼의 가운데에 맞춤 */
+  min-width: 132px;
+  padding: 6px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  box-shadow: var(--shadow-md);
+}
+
+.pill-menu-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  padding: 6px 8px;
+  border-radius: var(--radius-sm);
+  color: var(--color-text-secondary);
+}
+
+.pill-menu-item:hover {
+  background: var(--color-hover);
+}
+
+/* ===== 8. 팝업(모달) ===== */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(15, 17, 21, 0.5);
+}
+
+.modal {
+  width: 100%;
+  max-width: 460px;
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 16px 16px 24px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.modal-title {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.modal-body {
+  padding: 24px;
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 16px 24px;
+  border-top: 1px solid var(--color-border);
+}
+
+/* ===== 9. 알림(토스트) ===== */
+.toast-container {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 300;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-width: calc(100vw - 32px);
+}
+
+.toast {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 260px;
+  max-width: 420px;
+  padding: 12px 16px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-left-width: 4px;
+  border-radius: 10px;
+  box-shadow: var(--shadow-md);
+  font-size: 14px;
+  animation: toast-in 0.2s ease-out;
+}
+
+.toast-icon {
+  flex: none;
+}
+
+.toast-success {
+  border-left-color: var(--tone-green-text);
+}
+
+.toast-success .toast-icon {
+  color: var(--tone-green-text);
+}
+
+.toast-error {
+  border-left-color: var(--tone-red-text);
+}
+
+.toast-error .toast-icon {
+  color: var(--tone-red-text);
+}
+
+.toast-info {
+  border-left-color: var(--tone-blue-text);
+}
+
+.toast-info .toast-icon {
+  color: var(--tone-blue-text);
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ===== 10. 로딩 ===== */
+.page-loader {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-height: 100vh;
+  color: var(--color-text-muted);
+}
+
+/* 빙글빙글 도는 아이콘 */
+.spin {
+  animation: spin 0.9s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* 움직임 줄이기 설정을 켠 사용자에게는 애니메이션을 끔 (접근성) */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

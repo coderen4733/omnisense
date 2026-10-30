@@ -1,0 +1,24 @@
+{
+  // TypeScript 설정 파일 (npm run build 시 타입 검사에 사용)
+  "compilerOptions": {
+    // 1. 어떤 문법/기능까지 사용할지
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "moduleResolution": "bundler", // Vite 같은 번들러 방식으로 import 경로를 해석
+    "jsx": "react-jsx", // React 17+ 방식 (파일마다 import React 를 적지 않아도 됨)
+    "types": ["vite/client"], // import.meta.env, CSS import 등 Vite 전용 타입
+
+    // 2. 타입 검사 강도 (strict: 실수를 최대한 빨리 잡기 위해 엄격하게)
+    "strict": true,
+    "noUnusedLocals": true, // 사용하지 않는 변수가 있으면 에러
+    "noUnusedParameters": true, // 사용하지 않는 함수 매개변수가 있으면 에러
+    "noFallthroughCasesInSwitch": true,
+
+    // 3. 기타
+    "verbatimModuleSyntax": true, // 타입만 가져올 때는 반드시 import type 사용
+    "skipLibCheck": true, // node_modules 안의 타입 파일은 검사하지 않음 (빌드 속도)
+    "noEmit": true // 타입 검사만 하고 파일은 만들지 않음 (실제 빌드는 Vite가 담당)
+  },
+  "include": ["src"]
+}

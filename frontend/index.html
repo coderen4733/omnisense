@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>UNION OmniSense</title>
+    <script>
+      //  * 화면이 그려지기 "전에" 저장된 테마(라이트/다크)를 먼저 적용
+      //  - React가 실행되기 전에 적용해야 새로고침할 때 화면이 하얗게 번쩍이지 않음
+      //  - 키 이름은 src/constants/app.ts 의 STORAGE_KEYS.theme 과 같아야 함
+      try {
+        var savedTheme = localStorage.getItem('omnisense-theme')
+        var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+        document.documentElement.dataset.theme =
+          savedTheme === 'light' || savedTheme === 'dark' ? savedTheme : prefersDark ? 'dark' : 'light'
+      } catch (error) {
+        document.documentElement.dataset.theme = 'light'
+      }
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
