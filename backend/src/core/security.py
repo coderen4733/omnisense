@@ -5,12 +5,36 @@ import uuid  # 토큰마다 겹치지 않는 고유 번호(jti) 생성
 from datetime import UTC, datetime, timedelta
 
 import jwt  # PyJWT 라이브러리 (JWT 토큰 생성/검증)
+
+# Fernet(양방향 암호화) - LLM API 키 암호화용
+from cryptography.fernet import Fernet, InvalidToken
 from cryptography.hazmat.primitives.kdf.scrypt import Scrypt
 
 from src.core.config import get_settings
 
 # get_settings()를 호출하여 환경변수 객체 가져오기 (JWT 비밀키, 만료 시간 등)
 settings = get_settings()
+
+#  * LLM API 키 암호화/복호화 도구 추가
+#  * DB에 저장할 LLM API 키를 암호화(양방향)하는 Fernet 도구를 추가합니다.
+#  * 비밀번호와 API 키를 다르게 저장하는 이유
+#  - 비밀번호: 원래 값을 다시 알 필요가 없음 => 해시(단방향, 되돌릴 수 없음)로 저장
+#  - API 키  : LLM을 호출할 때 원래 값이 필요함 => 암호화(양방향, 비밀키로 되돌릴 수 있음)로 저장
+#  - Fernet: cryptography 라이브러리가 제공하는 "안전하게 쓰기 쉬운" 암호화 방식 (AES + 위조 검사)
+try:
+    _fernet = Fernet(settings.llm_secret_key.encode("utf-8"))
+except ValueError as err:
+    # 키 형식이 틀리면 서버 시작 시점에 바로 알려줌 (에러 메시지에 키 값은 포함되지 않음)
+    raise RuntimeError(
+        "LLM_SECRET_KEY 형식이 올바르지 않습니다. "
+        ".env.example의 생성 방법으로 새 키를 만들어 주세요."
+    ) from err
+
+
+# 저장된 API 키를 복호화하지 못했을 때 발생하는 에러
+class SecretDecryptError(Exception):
+    pass
+
 
 # Scrypt 해싱 설정값 (권장 보안 표준 표준값)
 SCRYPT_N = 16384  # CPU/Memory 비용 계수
@@ -119,6 +143,26 @@ def decode_token(token: str, token_type: str) -> dict:
     if payload["type"] != token_type:
         raise jwt.InvalidTokenError("토큰 종류가 올바르지 않습니다.")
     return payload
+
+
+#  * 비밀값 암호화 함수 추가
+#  * 평문(예: API 키) => 암호문(DB 저장용 문자열)으로 바꿈
+#  - 같은 평문이라도 암호화할 때마다 결과가 달라짐 (암호문만 보고 같은 키인지 알 수 없음)
+def encrypt_secret(plain_text: str) -> str:
+    return _fernet.encrypt(plain_text.encode("utf-8")).decode("utf-8")
+
+
+#  * 비밀값 복호화 함수 추가
+#  * 암호문(DB에 저장된 문자열) => 평문(예: API 키)으로 되돌림
+#  - LLM_SECRET_KEY가 암호화할 때와 다르면 InvalidToken 에러 => SecretDecryptError로 바꿔서 던짐
+def decrypt_secret(encrypted_text: str) -> str:
+    try:
+        return _fernet.decrypt(encrypted_text.encode("utf-8")).decode("utf-8")
+    except InvalidToken as err:
+        raise SecretDecryptError(
+            "저장된 API 키를 복호화할 수 없습니다. "
+            "LLM_SECRET_KEY가 바뀌었다면 공급자의 API 키를 다시 입력해 주세요."
+        ) from err
 
 
 # 토큰 해시 함수 (리프레시 토큰을 DB에 저장할 때 사용)

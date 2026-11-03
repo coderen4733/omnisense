@@ -14,9 +14,8 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
         <ThemeToggle />
       </div>
       <div className="auth-card">
-        {/* [수정] * 로그인 화면 로고 앞에 OS 심볼 추가 [2026-10-28 17:57]
-            [기존] 글자 로고(UNION OmniSense)만 표시했습니다.
-            [변경] 헤더와 똑같이 "OS 심볼 + 글자 로고"를 나란히 표시합니다. (모바일에서는 위아래로 쌓음) */}
+        {/* 로그인 화면 로고 앞에 OS 심볼
+            헤더와 똑같이 "OS 심볼 + 글자 로고"를 나란히 표시 (모바일에서는 위아래로 쌓음) */}
         <div className="auth-brand">
           <LogoMark size="lg" />
           <Logo size="lg" />

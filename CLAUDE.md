@@ -36,7 +36,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## 5. 고객사 환경 대비
 - **외부 시스템 연동 (폐쇄망 납품 대비)**:
   - 모든 외부 연결 정보(주소, API 키, 모델 이름, 벡터 차원 등)는 코드에 적지 말고 `src/core/config.py`의 환경 변수로 받아야 합니다. 환경 변수만 바꾸면 클라우드/고객사 환경을 전환할 수 있어야 합니다.
-  - Vector DB, 임베딩, LLM을 호출하는 코드는 각각 `src/core/` 아래 한 파일에만 둡니다. 다른 제품으로 교체할 때 그 파일만 수정하면 되도록 하기 위함입니다.
+  - **예외 - LLM 공급자/모델**: 여러 LLM을 운영 중에 추가·교체할 수 있도록, LLM 공급자(주소, 리전, API 키)와 모델 정보는 관리자가 화면(설정 > LLM 모델 관리)에서 등록하고 DB(`llm_providers`, `llm_models`)에 저장합니다.
+    - API 키는 반드시 `src/core/security.py`의 `encrypt_secret()`으로 암호화해서 저장하고, 응답이나 로그에 평문으로 노출하지 않습니다.
+    - 암호화에 쓰는 비밀키(`LLM_SECRET_KEY`)는 `.env`로 받습니다. 이 키가 바뀌면 저장된 API 키를 복호화할 수 없으므로 화면에서 다시 입력해야 합니다.
+    - 개발(Ollama)과 납품(vLLM)은 같은 OpenAI 호환 방식이므로, 공급자 주소만 바꾸면 코드 수정 없이 전환됩니다.
+  - Vector DB, 임베딩, LLM을 호출하는 코드는 각각 `src/core/` 아래 한 파일에만 둡니다. 다른 제품으로 교체할 때 그 파일만 수정하면 되도록 하기 위함입니다. (LLM: `src/core/llm.py`)
   - 앱이 실행 중에 인터넷(모델 자동 다운로드, 외부 CDN 등)에 의존하지 않도록 해야 합니다.
 
 ## 6. 주석

@@ -21,10 +21,9 @@
 }
 
 /* ===== 2. 로고 ===== */
-/* [수정] * 로고 아래 문구 정렬 방식 변경 [2026-10-28 17:35]
-   [기존] 문구가 로고 영역 폭만큼 늘어나 있었습니다.
-   [변경] align-items: flex-start => 문구가 "글자 폭"만큼만 차지하도록 하여,
-          Logo.tsx에서 문구의 실제 폭을 재고 로고 양끝에 맞출 수 있게 합니다. */
+/* 로고 아래 문구 정렬 방식
+   align-items: flex-start => 문구가 "글자 폭"만큼만 차지하도록 하여,
+   Logo.tsx에서 문구의 실제 폭을 재고 로고 양끝에 맞출 수 있게 함 */
 .logo {
   display: flex;
   flex-direction: column;
@@ -49,9 +48,8 @@
   margin-left: 6px;
 }
 
-/* [수정] * 로고 아래 문구 색상/간격 변경 [2026-10-28 17:35]
-   [기존] 회색 글자 + 고정 글자 간격(letter-spacing: 0.01em)이었습니다.
-   [변경] 보라색 글자로 바꾸고, 글자 간격은 Logo.tsx가 로고 폭에 맞춰 자동으로 계산합니다. */
+/* 로고 아래 문구 색상/간격
+   보라색 글자로 바꾸고, 글자 간격은 Logo.tsx가 로고 폭에 맞춰 자동으로 계산 */
 .logo-subtitle {
   margin-top: 3px;
   color: var(--color-brand-purple);
@@ -87,12 +85,10 @@
   border-bottom: 1px solid var(--color-border);
 }
 
-/* [수정] * 헤더 왼쪽 배치 변경 (로고 => 구분선 => 메뉴 접기 버튼 => 현재 위치) [2026-10-28 17:35]
-   [기존] 헤더 왼쪽 여백(padding-left: 24px) + 항목 사이 간격(gap: 16px)으로 배치하여
-          구분선 위치가 로고 길이에 따라 달라졌습니다.
-   [변경] 로고 영역(.header-brand)의 폭을 사이드바 폭과 똑같이 고정하여,
-          바로 뒤의 구분선이 아래 사이드바의 오른쪽 경계선과 일직선이 됩니다.
-          (메뉴를 접으면 사이드바가 좁아지므로, 접힌 상태에서는 일직선이 아닙니다) */
+/* 헤더 왼쪽 배치 변경 (로고 => 구분선 => 메뉴 접기 버튼 => 현재 위치)
+   로고 영역(.header-brand)의 폭을 사이드바 폭과 똑같이 고정하여,
+   바로 뒤의 구분선이 아래 사이드바의 오른쪽 경계선과 일직선이 됨
+   (메뉴를 접으면 사이드바가 좁아지므로, 접힌 상태에서는 일직선이 아님) */
 .header-left {
   display: flex;
   align-items: center;
@@ -107,27 +103,26 @@
   flex: none;
   width: calc(var(--sidebar-width) - 1px);
   height: 100%;
-  /* [수정] * OS 심볼 추가에 맞춰 로고 영역 여백/애니메이션 변경 [2026-10-28 17:54]
-     [기존] padding-left: 24px (글자 로고만 있었음)
-     [변경] 왼쪽 여백 = (접힌 메뉴 폭 - 심볼 크기) / 2
-            => 메뉴를 접었을 때 심볼이 접힌 메뉴의 정가운데에 오고, 펼쳐도 심볼 위치가 그대로임
-            - gap: 심볼과 글자 로고 사이 간격
-            - overflow: hidden: 펼치는 애니메이션 도중 글자 로고가 영역 밖으로 삐져나오지 않게 가림
-            - transition: 사이드바와 같은 속도(0.2초)로 폭이 바뀜 */
+  /* OS 심볼 추가에 맞춰 로고 영역 여백/애니메이션
+     왼쪽 여백 = (접힌 메뉴 폭 - 심볼 크기) / 2
+     => 메뉴를 접었을 때 심볼이 접힌 메뉴의 정가운데에 오고, 펼쳐도 심볼 위치가 그대로임
+     - gap: 심볼과 글자 로고 사이 간격
+     - overflow: hidden: 펼치는 애니메이션 도중 글자 로고가 영역 밖으로 삐져나오지 않게 가림
+     - transition: 사이드바와 같은 속도(0.2초)로 폭이 바뀜 */
   padding-left: calc((var(--sidebar-collapsed-width) - 1px - var(--logo-mark-size)) / 2);
   gap: 10px;
   overflow: hidden;
   transition: width 0.2s ease;
 }
 
-/* [수정] 메뉴가 접혔을 때의 로고 영역 (OS 심볼만 표시) [2026-10-28 17:54]
-   - 접힌 메뉴 폭(72px)으로 줄어듦 => 구분선이 접힌 사이드바 경계선과도 일직선 */
+/* 메뉴가 접혔을 때의 로고 영역 (OS 심볼만 표시)
+   접힌 메뉴 폭(72px)으로 줄어듦 => 구분선이 접힌 사이드바 경계선과도 일직선 */
 .header-brand.is-collapsed {
   width: calc(var(--sidebar-collapsed-width) - 1px);
 }
 
-/* [수정] OS 심볼 (빨간 박스 + 흰 글자) 스타일 추가 [2026-10-28 17:54]
-   - 크기(--logo-mark-size)는 두 줄짜리 글자 로고 높이에 맞춤 */
+/* OS 심볼 (빨간 박스 + 흰 글자)
+   크기(--logo-mark-size)는 두 줄짜리 글자 로고 높이에 맞춤 */
 .logo-mark {
   display: inline-flex;
   align-items: center;
@@ -144,8 +139,8 @@
   line-height: 1;
 }
 
-/* [수정] 로그인 화면용 큰 OS 심볼 추가 [2026-10-28 17:57]
-   - 큰 글자 로고(제목 30px + 문구 13px) 높이에 맞춤, 모서리/글자 비율은 헤더용과 동일 */
+/* 로그인 화면용 큰 OS 심볼
+   큰 글자 로고(제목 30px + 문구 13px) 높이에 맞춤, 모서리/글자 비율은 헤더용과 동일 */
 .logo-mark-lg {
   width: 52px;
   height: 52px;
@@ -338,10 +333,8 @@
   padding: 16px 12px 8px;
 }
 
-/* 새 워크플로우 버튼
-   [수정] * 버튼 색상을 빨간색 => 보라색(#6D4AFF)으로 변경 [2026-10-28 17:59]
-   [기존] background: var(--color-primary) (빨간색) => 바로 위 헤더의 빨간 OS 심볼과 색이 겹쳐 보였습니다.
-   [변경] background: var(--color-accent) (보라색), 마우스를 올리면 var(--color-accent-hover) */
+/* 새 워크플로우 버튼 - 보라색(#6D4AFF)으로
+   background: var(--color-accent) (보라색), 마우스를 올리면 var(--color-accent-hover) */
 .sidebar-new-btn {
   display: flex;
   align-items: center;
@@ -484,9 +477,8 @@
 }
 
 @media (max-width: 768px) {
-  /* [수정] 모바일 헤더 왼쪽 배치 변경 [2026-10-28 17:35]
-     [기존] 헤더 왼쪽 여백과 항목 간격(gap)을 줄였습니다.
-     [변경] 로고 영역을 고정 폭 대신 글자 폭만큼만 차지하게 합니다. (화면이 좁아 오른쪽 버튼 공간 확보) */
+  /* 모바일 헤더 왼쪽 배치
+     로고 영역을 고정 폭 대신 글자 폭만큼만 차지하게 (화면이 좁아 오른쪽 버튼 공간 확보) */
   .header-brand {
     width: auto;
     padding-left: 16px;

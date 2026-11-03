@@ -11,6 +11,7 @@ import AccountPage from './pages/account/AccountPage'
 import LoginPage from './pages/auth/LoginPage'
 import SignUpPage from './pages/auth/SignUpPage'
 import ComingSoonPage from './pages/ComingSoonPage'
+import LlmPage from './pages/llm/LlmPage'
 import UsersPage from './pages/users/UsersPage'
 
 //  * 앱의 가장 바깥 컴포넌트
@@ -44,6 +45,15 @@ export default function App() {
                     element={
                       <RoleRoute roles={USER_MANAGER_ROLES}>
                         <UsersPage />
+                      </RoleRoute>
+                    }
+                  />
+                  {/* LLM 모델 관리 화면 연결 (admin, manager) */}
+                  <Route
+                    path="/settings/llm"
+                    element={
+                      <RoleRoute roles={USER_MANAGER_ROLES}>
+                        <LlmPage />
                       </RoleRoute>
                     }
                   />

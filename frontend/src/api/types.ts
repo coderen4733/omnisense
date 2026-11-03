@@ -86,3 +86,104 @@ export interface ChangePasswordResponse {
   success: boolean
   signed_out_sessions: number
 }
+
+// LLM 연결 방식 (openai_compatible: Ollama·vLLM / bedrock: AWS Bedrock)
+export type LlmProviderType = 'openai_compatible' | 'bedrock'
+
+// LLM 모델 (ModelRes)
+//  - id: llm_models 테이블의 번호 / model_id: 공급자 서버의 모델 이름 (예: qwen3.5:9b)
+export interface LlmModel {
+  id: number
+  provider_id: number
+  model_id: string
+  display_name: string
+  supports_tools: boolean
+  supports_reasoning: boolean
+  is_active: boolean
+  created_at: string
+  updated_at: string
+}
+
+// LLM 공급자 (ProviderRes) - API 키 원문은 오지 않고 등록 여부(has_api_key)만 옴
+export interface LlmProvider {
+  id: number
+  name: string
+  provider_type: LlmProviderType
+  base_url: string | null
+  region: string | null
+  has_api_key: boolean
+  is_active: boolean
+  created_at: string
+  updated_at: string
+  models: LlmModel[]
+}
+
+// LLM 공급자 등록 - 요청 (ProviderCreateReq)
+export interface ProviderCreateRequest {
+  name: string
+  provider_type: LlmProviderType
+  base_url?: string
+  region?: string
+  api_key?: string
+}
+
+// LLM 공급자 수정 - 요청 (ProviderUpdateReq) - 보내지 않은 값은 바뀌지 않음
+export type ProviderUpdateRequest = {
+  name?: string
+  base_url?: string
+  region?: string
+  api_key?: string // 새 API 키 (보내지 않으면 기존 키 유지)
+  clear_api_key?: boolean // true면 저장된 API 키 삭제
+  is_active?: boolean
+}
+
+// LLM 모델 등록 - 요청 (ModelCreateReq)
+export interface ModelCreateRequest {
+  model_id: string
+  display_name: string
+  supports_tools: boolean
+  supports_reasoning: boolean
+}
+
+// LLM 모델 수정 - 요청 (ModelUpdateReq)
+export type ModelUpdateRequest = {
+  display_name?: string
+  supports_tools?: boolean
+  supports_reasoning?: boolean
+  is_active?: boolean
+}
+
+// LLM 모델 연결 테스트 - 응답 (ModelTestRes)
+export interface ModelTestResult {
+  success: boolean
+  latency_ms: number | null // 첫 응답까지 걸린 시간 (밀리초)
+  message: string
+}
+
+// 테스트 대화 메시지의 역할 (system: 지시문 / user: 사용자 / assistant: 모델)
+export type ChatRole = 'system' | 'user' | 'assistant'
+
+// 테스트 대화 - 요청 (ChatReq)
+export interface ChatRequest {
+  llm_model_id: number
+  messages: { role: ChatRole; content: string }[]
+  temperature?: number
+  max_tokens?: number
+  top_p?: number
+}
+
+//  * 테스트 대화 - 스트리밍으로 받는 이벤트 1개
+//  - type 값에 따라 들어있는 값이 다름 (TypeScript가 type으로 구분해 줌)
+export type ChatStreamEvent =
+  | { type: 'reasoning'; text: string } // 생각 과정 조각
+  | { type: 'content'; text: string } // 답변 조각
+  | { type: 'tool_call'; name: string; arguments: Record<string, unknown> } // 도구 호출 요청
+  | {
+      type: 'done' // 답변 끝
+      input_tokens: number
+      output_tokens: number
+      finish_reason: string | null // stop: 정상 종료 / length: 최대 토큰 수에 걸려 잘림
+      latency_ms: number // 전체 걸린 시간
+      first_token_ms: number | null // 첫 글자까지 걸린 시간
+    }
+  | { type: 'error'; message: string } // 오류

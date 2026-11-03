@@ -1,5 +1,6 @@
 import {
   Bot,
+  BrainCircuit,
   Database,
   LayoutDashboard,
   LayoutTemplate,
@@ -119,6 +120,15 @@ export const MAIN_MENU: MenuEntry[] = [
         path: '/settings/users',
         icon: Users,
         description: '사용자 계정의 권한 및 활성화 상태를 관리합니다.',
+        ready: true,
+        roles: USER_MANAGER_ROLES,
+      },
+      {
+        key: 'llm',
+        label: 'LLM 모델 관리',
+        path: '/settings/llm',
+        icon: BrainCircuit,
+        description: 'LLM 공급자와 모델을 등록하고 연결 상태를 테스트합니다.',
         ready: true,
         roles: USER_MANAGER_ROLES,
       },

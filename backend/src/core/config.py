@@ -74,16 +74,26 @@ class Settings(BaseSettings):
     vector_db_timeout: int = 10  # Qdrant 요청 제한 시간 (단위: 초)
 
     # Embedding 관련
-    # [수정] * 임베딩 서버 주소를 필수값 -> 선택값으로 변경 [2026-10-28 16:45]
-    # [기존] embedding_base_url: str => .env에 값이 없으면 서버가 시작되지 않았습니다.
-    # [변경] embedding_base_url: str | None = None => 값이 없어도 서버가 시작됩니다.
-    #        (embedding.py 작업 시 다시 필수값으로 바꿀지 결정)
     embedding_base_url: str | None = None  # 임베딩 서버 주소 (/v1 까지)
     embedding_api_key: str | None = None
     embedding_model: str = "bge-m3"  # 임베딩 모델 이름 (임베딩 서버에 등록된 이름)
     embedding_dim: int = 1024
     embedding_batch_size: int = 32
     embedding_timeout: int = 60  # 임베딩 요청 제한 시간 (단위: 초, CPU는 느릴 수 있어 넉넉하게)
+
+    # LLM 관련
+    #  * LLM 공급자(Ollama, vLLM, Bedrock) 정보는 관리자가 화면에서 등록하고 DB에 저장
+    #    합니다. 이때 API 키는 암호화해서 저장하며, 암호화에 쓰는 비밀키만 .env에서 받습니다.
+    #  * llm_secret_key: DB에 저장하는 LLM API 키를 암호화/복호화하는 비밀키
+    #    (Fernet 키, 44자) - 필수
+    #  - 생성 방법: backend/.env.example 의 LLM_SECRET_KEY 설명 참고
+    #  - ⚠️ 이 키를 잃어버리거나 바꾸면 DB에 저장된 API 키를 복호화할 수 없음
+    #    => 그때는 화면에서 공급자의 API 키를 다시 입력해야 함
+    llm_secret_key: str = Field(min_length=44, max_length=44)
+    #  * LLM 응답 대기 제한 시간 (단위: 초)
+    #  - 로컬 LLM은 모델을 처음 불러올 때(메모리에 올릴 때) 수십 초가 걸릴 수 있어 넉넉하게 설정
+    #  - 스트리밍에서는 "다음 글자 조각이 올 때까지" 기다리는 최대 시간
+    llm_request_timeout: int = 120
 
     #  * psycopg 드라이버용 DB 주소를 만들어 주는 속성(property)
     #  - 한 곳(여기)에 모아두고 database.py, env.py 모두 settings.async_db_url을 사용

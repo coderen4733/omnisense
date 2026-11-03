@@ -30,9 +30,6 @@
   box-shadow: var(--shadow-md);
 }
 
-/* [수정] * 로그인 화면 로고 영역 변경 [2026-10-28 17:57]
-   [기존] .auth-card .logo { margin-bottom: 36px } => 글자 로고만 있었음
-   [변경] OS 심볼 + 글자 로고를 가로로 나란히, 카드 가운데에 배치 (아래 여백은 이 영역으로 옮김) */
 .auth-brand {
   display: flex;
   align-items: center;
@@ -104,7 +101,6 @@
     padding: 32px 20px;
   }
 
-  /* [수정] 모바일에서는 가로 공간이 부족하므로 OS 심볼을 글자 로고 위에 쌓아서 표시 [2026-10-28 17:57] */
   .auth-brand {
     flex-direction: column;
     gap: 12px;

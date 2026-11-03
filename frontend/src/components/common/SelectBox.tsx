@@ -7,6 +7,8 @@ import { ChevronDown } from 'lucide-react'
 export interface SelectOption<T extends string> {
   value: T
   label: string
+  // 선택할 수 없는 선택지 표시 기능(예: 준비중인 연결 방식)
+  disabled?: boolean
 }
 
 interface SelectBoxProps<T extends string> {
@@ -34,7 +36,7 @@ export default function SelectBox<T extends string>({
         aria-label={ariaLabel}
       >
         {options.map((option) => (
-          <option key={option.value} value={option.value}>
+          <option key={option.value} value={option.value} disabled={option.disabled}>
             {option.label}
           </option>
         ))}

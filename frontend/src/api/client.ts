@@ -35,12 +35,15 @@ export function getErrorMessage(error: unknown): string {
 // 쿼리 파라미터(주소 뒤 ?a=1&b=2 부분)에 넣을 수 있는 값의 타입
 type QueryValue = string | number | boolean | undefined | null
 
-// request() 함수의 옵션
+// request() / fetchWithAuth() 함수의 옵션
 interface RequestOptions {
   method?: 'GET' | 'POST' | 'PATCH' | 'PUT' | 'DELETE'
   body?: unknown // JSON으로 보낼 데이터
   query?: Record<string, QueryValue> // 쿼리 파라미터
   auth?: boolean // true(기본값): 요청 헤더에 액세스 토큰을 붙임 / false: 로그인 전 API(로그인, 회원가입)
+  // 요청 중단 신호 - 테스트 대화의 "중지" 버튼에서 사용
+  //  - AbortController로 만든 signal을 넘기면, controller.abort() 호출 시 요청이 즉시 취소됨
+  signal?: AbortSignal
 }
 
 //  * 요청 주소 만들기
@@ -62,7 +65,8 @@ function buildUrl(path: string, query?: Record<string, QueryValue>): string {
 //  - FastAPI의 에러 응답 형식은 2가지
 //    1) HTTPException      : { "detail": "이미 존재하는 email입니다." }
 //    2) 입력값 검사 실패(422): { "detail": [{ "msg": "...", ... }] } (영어 메시지)
-async function parseErrorMessage(response: Response): Promise<string> {
+//  * export - 스트리밍 API(api/llm.ts)에서도 같은 방식으로 에러 메시지를 꺼내기 위함
+export async function parseErrorMessage(response: Response): Promise<string> {
   try {
     const body = await response.json()
     if (typeof body?.detail === 'string') {
@@ -117,12 +121,15 @@ function refreshAccessToken(): Promise<boolean> {
   return refreshPromise
 }
 
-//  * 모든 API 요청에서 공통으로 사용하는 함수
-//  - 백엔드 응답 { message, data } 중에서 data만 꺼내서 돌려줌
-//  - 실패하면 ApiError를 발생시킴 => 호출하는 쪽에서 try/catch로 처리
-//  - <T>: 돌려받을 data의 타입 (예: request<User>('/users/me'))
-export async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
-  const { method = 'GET', body, query, auth = true } = options
+//  * 토큰 첨부 + 자동 재발급 부분을 fetchWithAuth()로 분리
+//  * 앞부분(요청 + 토큰 재발급)을 fetchWithAuth()로 분리해서, 응답(Response)을 그대로 돌려줌
+//    => 테스트 대화처럼 JSON이 아니라 "조각조각 오는 응답(스트리밍)"도 같은 로그인 처리를 쓸 수 있음
+//       request()는 fetchWithAuth()를 호출한 뒤 data만 꺼내므로 사용법은 그대로
+//  * 로그인 토큰을 붙여서 요청하고, 응답(Response)을 그대로 돌려주는 함수
+//  - 401(로그인 필요)이면 토큰 재발급 후 한 번 더 요청함
+//  - 응답 상태(성공/실패) 확인은 호출하는 쪽에서 함
+export async function fetchWithAuth(path: string, options: RequestOptions = {}): Promise<Response> {
+  const { method = 'GET', body, query, auth = true, signal } = options
 
   // 1. 실제로 요청을 보내는 함수 (토큰 재발급 후 한 번 더 보낼 수 있도록 함수로 만듦)
   const send = async (): Promise<Response> => {
@@ -141,8 +148,13 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
         method,
         headers,
         body: body !== undefined ? JSON.stringify(body) : undefined,
+        signal,
       })
-    } catch {
+    } catch (error) {
+      // 사용자가 직접 중단한 경우(중지 버튼) => 원래 에러(AbortError)를 그대로 전달
+      if (signal?.aborted) {
+        throw error
+      }
       // fetch 자체가 실패 = 서버에 연결하지 못함 (백엔드 꺼짐, 주소 오류, 네트워크 끊김 등)
       throw new ApiError(0, '서버에 연결할 수 없습니다. 백엔드 서버 상태를 확인해 주세요.')
     }
@@ -163,6 +175,17 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
       window.dispatchEvent(new Event(AUTH_EXPIRED_EVENT))
     }
   }
+
+  return response
+}
+
+//  * 모든 API 요청에서 공통으로 사용하는 함수
+//  - 백엔드 응답 { message, data } 중에서 data만 꺼내서 돌려줌
+//  - 실패하면 ApiError를 발생시킴 => 호출하는 쪽에서 try/catch로 처리
+//  - <T>: 돌려받을 data의 타입 (예: request<User>('/users/me'))
+export async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
+  // 1~3. 요청 보내기 (+ 필요하면 토큰 재발급 후 재요청)
+  const response = await fetchWithAuth(path, options)
 
   // 4. 실패 응답(200번대가 아님) => 에러 발생
   if (!response.ok) {

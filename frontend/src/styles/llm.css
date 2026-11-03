@@ -1,0 +1,418 @@
+/*
+ * LLM 모델 관리 화면 스타일 (공급자·모델 탭, 테스트 대화 탭)
+ */
+
+/* ===== 1. 공통 ===== */
+
+/* 화면 제목 아래 탭 (공급자·모델 / 테스트 대화) */
+.page-tabs {
+  margin-bottom: 20px;
+}
+
+/* 내용이 없거나 불러오는 중일 때 */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 56px 24px;
+  color: var(--color-text-secondary);
+  text-align: center;
+}
+
+.empty-state strong {
+  color: var(--color-text);
+  font-size: 16px;
+}
+
+.empty-state.is-error {
+  color: var(--tone-red-text);
+}
+
+/* 오른쪽 정렬 칸 (표의 관리 버튼) */
+.data-table .col-right {
+  text-align: right;
+}
+
+/* 버튼 여러 개를 가로로 */
+.row-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+}
+
+/* 작은 알약 (도구 호출, 생각 과정 표시) */
+.pill-sm {
+  height: 22px;
+  padding: 0 8px;
+  font-size: 12px;
+}
+
+/* 값이 고정된 입력 항목 (수정 화면의 연결 방식, 모델 ID) */
+.field-static {
+  align-self: flex-start;
+  font-weight: 600;
+}
+
+/* 입력창 + 버튼 한 줄 */
+.input-row {
+  display: flex;
+  gap: 8px;
+}
+
+.input-row .input {
+  flex: 1;
+  min-width: 0;
+}
+
+/* 선택 상자를 칸 전체 폭으로 */
+.select-block {
+  display: flex;
+  width: 100%;
+}
+
+.select-block .select {
+  width: 100%;
+}
+
+/* ===== 2. 공급자 카드 ===== */
+.provider-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.provider-heading {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  min-width: 0;
+}
+
+/* 주소, API 키 등록 여부 */
+.provider-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+  padding: 12px 24px;
+  color: var(--color-text-secondary);
+  font-size: 13px;
+}
+
+.provider-meta .code {
+  margin-left: 4px;
+}
+
+.provider-empty {
+  padding: 24px;
+  border-top: 1px solid var(--color-border);
+  color: var(--color-text-muted);
+  text-align: center;
+}
+
+.feature-badges {
+  display: flex;
+  gap: 6px;
+}
+
+/* 연결 테스트 버튼 + 결과 */
+.test-cell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.test-result {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 320px;
+  overflow: hidden;
+  color: var(--color-text-secondary);
+  font-size: 13px;
+  text-overflow: ellipsis; /* 긴 실패 사유는 ... 으로 줄임 (마우스를 올리면 전체 표시) */
+}
+
+.test-result svg {
+  flex: none;
+}
+
+.test-result.is-success {
+  color: var(--tone-green-text);
+}
+
+.test-result.is-error {
+  color: var(--tone-red-text);
+}
+
+
+/* 글자처럼 보이는 작은 버튼 (밑줄) */
+.text-btn {
+  margin-left: 4px;
+  color: var(--color-text-secondary);
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  white-space: nowrap;
+}
+
+.text-btn:hover {
+  color: var(--color-text);
+}
+
+/* 팝업 위쪽: 모델 이름 / 모델 ID */
+.error-detail-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+  font-size: 14px;
+}
+
+.error-detail-meta div {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.error-detail-meta dt {
+  flex: none;
+  width: 56px;
+  color: var(--color-text-secondary);
+}
+
+/* 오류 메시지 전체 - 줄바꿈 유지, 긴 주소도 칸 안에서 줄을 넘김, 마우스로 선택해서 복사 가능 */
+.error-detail-message {
+  max-height: 320px;
+  padding: 14px 16px;
+  overflow-y: auto;
+  background: var(--tone-red-bg);
+  border-radius: var(--radius-md);
+  color: var(--tone-red-text);
+  font-size: 13px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  user-select: text;
+}
+
+/* ===== 3. 모델 등록 팝업: 서버에서 불러온 모델 목록 ===== */
+.chip-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  max-height: 160px;
+  padding: 10px;
+  overflow-y: auto;
+  background: var(--color-surface-muted);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.chip {
+  height: 30px;
+  padding: 0 12px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-strong);
+  border-radius: 999px;
+  font-size: 13px;
+}
+
+.chip:hover:not(:disabled) {
+  border-color: var(--color-primary);
+}
+
+.chip.is-selected {
+  background: var(--color-primary-soft);
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+.chip:disabled {
+  opacity: 0.5;
+}
+
+/* ===== 4. 테스트 대화 ===== */
+
+/* 왼쪽 설정(고정 폭) + 오른쪽 대화창 */
+.chat-layout {
+  display: grid;
+  grid-template-columns: 320px minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+
+/* Temperature / Max Tokens / Top P 한 줄에 3칸 */
+.param-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.param-grid .input {
+  width: 100%;
+  min-width: 0;
+}
+
+/* 대화창: 화면 높이에 맞추고, 메시지 영역만 스크롤 */
+.chat-panel {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - var(--header-height) - 230px);
+  min-height: 520px;
+}
+
+.chat-messages {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 20px 24px;
+  overflow-y: auto;
+}
+
+.chat-empty {
+  margin: auto;
+  color: var(--color-text-muted);
+  text-align: center;
+}
+
+.chat-turn {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-width: 85%;
+}
+
+/* 내 질문: 오른쪽 */
+.chat-turn.is-user {
+  align-self: flex-end;
+}
+
+/* 모델 답변: 왼쪽 */
+.chat-turn.is-assistant {
+  align-self: flex-start;
+}
+
+/* 말풍선 - pre-wrap: 줄바꿈을 그대로 표시 / break-word: 긴 단어는 줄을 넘겨서 표시 */
+.chat-bubble {
+  padding: 12px 16px;
+  border-radius: 14px;
+  line-height: 1.65;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+}
+
+.chat-turn.is-user .chat-bubble {
+  background: var(--color-accent);
+  color: #ffffff;
+  border-bottom-right-radius: 4px;
+}
+
+.chat-turn.is-assistant .chat-bubble {
+  background: var(--color-surface-muted);
+  border: 1px solid var(--color-border);
+  border-bottom-left-radius: 4px;
+}
+
+/* 생각 과정 (접었다 펼 수 있는 상자) */
+.reasoning {
+  border-left: 3px solid var(--color-border-strong);
+  padding-left: 12px;
+}
+
+.reasoning summary {
+  color: var(--color-text-secondary);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.reasoning-body {
+  max-height: 240px;
+  margin-top: 6px;
+  overflow-y: auto;
+  color: var(--color-text-secondary);
+  font-size: 13px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+}
+
+.chat-waiting {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--color-text-muted);
+  font-size: 13px;
+}
+
+/* 답변 아래 안내 (오류, 중지, 잘림) */
+.chat-notice {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--color-text-secondary);
+  font-size: 13px;
+}
+
+.chat-notice.is-error {
+  color: var(--tone-red-text);
+}
+
+.chat-notice.is-warning {
+  color: var(--tone-orange-text);
+}
+
+/* 토큰 사용량, 걸린 시간 */
+.chat-stats {
+  color: var(--color-text-muted);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* 메시지 입력 영역 */
+.chat-input-area {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  padding: 14px 16px;
+  border-top: 1px solid var(--color-border);
+}
+
+.chat-input {
+  flex: 1;
+  min-height: 46px;
+  max-height: 160px;
+  resize: none;
+}
+
+/* ===== 5. 화면 폭에 따른 조정 ===== */
+@media (max-width: 1024px) {
+  /* 설정과 대화창을 위아래로 */
+  .chat-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .chat-panel {
+    height: 70vh;
+    min-height: 420px;
+  }
+}
+
+@media (max-width: 768px) {
+  .provider-meta {
+    padding: 12px 16px;
+  }
+
+  .chat-messages {
+    padding: 16px;
+  }
+
+  .chat-turn {
+    max-width: 100%;
+  }
+}

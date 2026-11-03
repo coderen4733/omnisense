@@ -21,6 +21,8 @@ from src.core.config import get_settings
 #  - 모델 파일을 import 해야 그 안의 테이블 정보가 Base.metadata에 등록됨
 #  - ⚠️ 새 모델 파일(models.py)을 만들면 반드시 여기에 한 줄 추가해야 alembic이 인식함!
 #  - import만 하고 코드에서 직접 사용하지는 않으므로 "noqa: F401"로 ruff 경고를 끔
+#    (import 순서는 알파벳순이어야 ruff 규칙(I001)을 통과하므로 맨 위에 둠)
+from src.services.gateway.llm import models as llm_models  # noqa: F401
 from src.services.iam.auth import models as auth_models  # noqa: F401
 from src.services.iam.user import models as user_models  # noqa: F401
 

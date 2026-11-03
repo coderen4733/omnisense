@@ -33,6 +33,8 @@ dev = [
 [tool.ruff]
 # 최근에는 모니터 가로 길이가 길어져 100, 120을 많이 선호함
 line-length = 100
+# 자동 생성 마이그레이션 파일을 린트 검사에서 제외
+extend-exclude = ["src/migrations/versions"]
 
 [tool.ruff.lint]
 # 코드를 더 깔끔하게 강제하기 위한 린트 규칙 활성화 (선택 사항)

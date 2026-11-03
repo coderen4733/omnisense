@@ -28,14 +28,10 @@
   /* 브랜드 / 주요 버튼 */
   --color-brand-red: #e11d2a; /* 로고 "IO" 색상 */
   --color-logo-text: #111111; /* 로고의 나머지 글자 */
-  /* [수정] * 로고 아래 문구 색상 추가 [2026-10-28 17:35]
-     [기존] 로고 아래 문구는 회색(--color-text-secondary)이었습니다.
-     [변경] 보라색(--color-brand-purple)을 새로 만들어 사용합니다. */
+  /* 로고 아래 문구 색상 - 보라색(--color-brand-purple) */
   --color-brand-purple: #6b46e5; /* 로고 아래 "AI Agent Orchestration Platform" 색상 */
-  /* [수정] * 보라색 버튼 색상 추가 [2026-10-28 17:59]
-     [기존] 없음 (새 워크플로우 버튼도 빨간색 --color-primary 사용)
-     [변경] 빨간 OS 심볼과 색이 겹치지 않도록 보라색 버튼 색상을 새로 만듦 (라이트/다크 모드 공통)
-            - 흰 글자와의 명암 대비 약 5:1 => 글자가 잘 읽히는 기준(4.5:1) 충족 */
+  /* 빨간 OS 심볼과 색이 겹치지 않도록 보라색 버튼 색상을 새로 만듦 (라이트/다크 모드 공통)
+     흰 글자와의 명암 대비 약 5:1 => 글자가 잘 읽히는 기준(4.5:1) 충족 */
   --color-accent: #6d4aff; /* 보라색 버튼 배경 (예: 새 워크플로우) */
   --color-accent-hover: #5a36f0; /* 보라색 버튼에 마우스를 올렸을 때 (조금 더 진하게) */
   --color-primary: #dc2626;
@@ -69,7 +65,7 @@
   --header-height: 64px;
   --sidebar-width: 248px;
   --sidebar-collapsed-width: 72px;
-  --logo-mark-size: 36px; /* [수정] OS 심볼 크기 추가 [2026-10-28 17:54] */
+  --logo-mark-size: 36px; 
 }
 
 /* ===== 2. 색상 변수 (다크 모드) - 바뀌는 값만 다시 정의 ===== */
@@ -91,7 +87,7 @@
 
   --color-brand-red: #f0333d;
   --color-logo-text: #f3f4f6; /* 다크 모드에서는 검정 글자가 보이지 않으므로 흰색 계열 */
-  /* [수정] 다크 모드용 보라색 추가 [2026-10-28 17:35] - 어두운 배경에서 잘 보이도록 밝은 보라색 */
+  /* 다크 모드용 보라색 추가 - 어두운 배경에서 잘 보이도록 밝은 보라색 */
   --color-brand-purple: #a78bfa;
   --color-primary: #ef4444;
   --color-primary-hover: #dc2626;
@@ -344,6 +340,61 @@ select {
 .input-action:hover {
   color: var(--color-text);
   background: var(--color-hover);
+}
+
+/* 공통 입력 요소 추가 (여러 줄 입력창, 체크박스, 코드 글자)
+   LLM 모델 관리 화면에서 처음 쓰지만, 다른 화면에서도 쓸 수 있도록 공통 스타일로 추가 */
+
+/* 여러 줄 입력창 (<textarea className="input textarea">) */
+.textarea {
+  height: auto;
+  min-height: 72px;
+  padding: 10px 14px;
+  line-height: 1.5;
+  resize: vertical; /* 사용자가 세로 크기만 조절 가능 */
+}
+
+/* 체크박스 + 설명 글 */
+.checkbox {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.checkbox input {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  margin: 3px 0 0;
+  accent-color: var(--color-primary); /* 체크 표시 색상 */
+  cursor: pointer;
+}
+
+/* 코드/모델 이름 같은 고정폭 글자 */
+.code {
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: var(--color-surface-muted);
+  border: 1px solid var(--color-border);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12.5px;
+}
+
+/* 흐린 글자 */
+.text-muted {
+  color: var(--color-text-muted);
+}
+
+/* 위험한 동작(삭제) 아이콘 버튼 */
+.icon-btn.is-danger:hover:not(:disabled) {
+  color: var(--tone-red-text);
+  background: var(--tone-red-bg);
+}
+
+.icon-btn:disabled {
+  opacity: 0.5;
 }
 
 /* 입력 항목 (라벨 + 입력창 + 안내) */

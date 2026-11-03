@@ -16,10 +16,9 @@ export default function Logo({ size = 'md' }: LogoProps) {
   const titleRef = useRef<HTMLDivElement>(null)
   const subtitleRef = useRef<HTMLDivElement>(null)
 
-  // [수정] * 로고 아래 문구를 로고 양끝에 맞추는 기능 추가 [2026-10-28 17:35]
-  // [기존] 문구가 원래 글자 간격 그대로 표시되어, 로고(UNION OmniSense)와 길이가 달랐습니다.
-  // [변경] 로고 폭을 재서 문구의 글자 간격(letter-spacing)을 자동으로 조절합니다.
-  //        => "AI"의 A는 로고 왼쪽 끝, "Platform"의 m은 로고 오른쪽 끝에 딱 맞춰집니다.
+  //  * 로고 아래 문구를 로고 양끝에 맞추는 기능
+  //  로고 폭을 재서 문구의 글자 간격(letter-spacing)을 자동으로 조절
+  //  => "AI"의 A는 로고 왼쪽 끝, "Platform"의 m은 로고 오른쪽 끝에 딱 맞춰짐
   //  * 글자 간격 계산 방법
   //  - useLayoutEffect: 화면에 그리기 "직전"에 실행 => 간격이 바뀌는 모습이 눈에 보이지 않음
   //  - ResizeObserver: 로고 글자의 폭이 바뀔 때마다 다시 계산
