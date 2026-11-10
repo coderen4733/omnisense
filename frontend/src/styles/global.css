@@ -591,6 +591,10 @@ select {
   box-shadow: var(--shadow-lg);
 }
 
+.modal.modal-lg {
+  max-width: 680px;
+}
+
 .modal-header {
   display: flex;
   align-items: center;
@@ -703,6 +707,136 @@ select {
   to {
     transform: rotate(360deg);
   }
+}
+
+/* 마크다운 답변 스타일
+   MarkdownView 컴포넌트가 그린 제목, 목록, 표, 코드, 수식의 모양을 정함 */
+/* ===== 11. 마크다운 (components/common/MarkdownView.tsx) ===== */
+.markdown {
+  /* 말풍선(chat-bubble)의 "줄바꿈 그대로 표시(pre-wrap)"를 끔
+     => 마크다운은 빈 줄로 문단을 나누므로, 그대로 두면 줄 간격이 두 배로 벌어짐 */
+  white-space: normal;
+  overflow-wrap: break-word;
+}
+
+/* 첫 요소 위, 마지막 요소 아래 여백 없애기 (말풍선 안쪽 여백과 겹치지 않도록) */
+.markdown > :first-child {
+  margin-top: 0;
+}
+
+.markdown > :last-child {
+  margin-bottom: 0;
+}
+
+.markdown p,
+.markdown ul,
+.markdown ol,
+.markdown pre,
+.markdown table,
+.markdown blockquote {
+  margin: 0 0 10px;
+}
+
+.markdown h1,
+.markdown h2,
+.markdown h3,
+.markdown h4 {
+  margin: 14px 0 8px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.markdown h1 {
+  font-size: 18px;
+}
+
+.markdown h2 {
+  font-size: 16px;
+}
+
+.markdown h3,
+.markdown h4 {
+  font-size: 15px;
+}
+
+.markdown ul,
+.markdown ol {
+  padding-left: 22px;
+}
+
+.markdown li + li {
+  margin-top: 4px;
+}
+
+.markdown a {
+  color: var(--tone-blue-text);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.markdown hr {
+  margin: 14px 0;
+  border: none;
+  border-top: 1px solid var(--color-border);
+}
+
+/* 인용문 (> 로 시작하는 줄) */
+.markdown blockquote {
+  padding-left: 12px;
+  border-left: 3px solid var(--color-border-strong);
+  color: var(--color-text-secondary);
+}
+
+/* 문장 안 코드 (`코드`) */
+.markdown code {
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: var(--color-hover);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.9em;
+}
+
+/* 코드 블록 (```) - 줄바꿈 유지, 길면 가로 스크롤 */
+.markdown pre {
+  padding: 12px 14px;
+  overflow-x: auto;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  line-height: 1.5;
+  white-space: pre;
+}
+
+.markdown pre code {
+  padding: 0;
+  background: none;
+}
+
+/* 표 - 넓으면 표만 가로 스크롤 */
+.markdown table {
+  display: block;
+  max-width: 100%;
+  overflow-x: auto;
+  border-collapse: collapse;
+}
+
+.markdown th,
+.markdown td {
+  padding: 6px 10px;
+  border: 1px solid var(--color-border);
+  text-align: left;
+}
+
+.markdown th {
+  background: var(--color-surface-muted);
+  font-weight: 600;
+}
+
+/* 한 줄 전체 수식 ($$...$$) - 길면 가로 스크롤 (말풍선 밖으로 넘치지 않도록) */
+.markdown .katex-display {
+  margin: 10px 0;
+  overflow-x: auto;
+  overflow-y: hidden;
 }
 
 /* 움직임 줄이기 설정을 켠 사용자에게는 애니메이션을 끔 (접근성) */

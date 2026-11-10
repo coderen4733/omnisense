@@ -75,7 +75,7 @@ export const MAIN_MENU: MenuEntry[] = [
     path: '/agents',
     icon: Bot,
     description: 'LLM, 프롬프트, 도구를 조합해 업무별 AI 에이전트를 만들고 관리합니다.',
-    ready: false,
+    ready: true,
   },
   {
     key: 'knowledge',

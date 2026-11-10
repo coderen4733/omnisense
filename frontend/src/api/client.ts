@@ -196,3 +196,55 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
   const json = (await response.json()) as ApiResponse<T>
   return json.data as T
 }
+
+//  * 스트리밍(SSE) 응답 읽기를 공통 함수로
+//  - 스트리밍(SSE) API 요청 시 답변이 한 번에 오지 않고 조각조각 올 때 사용
+//  - 조각(이벤트)이 올 때마다 onEvent를 호출함
+//    서버가 보내는 형식:  data: {"type":"content","text":"안녕"}\n\n
+//  - signal: 중지 버튼용 (AbortController.abort() 호출 시 즉시 중단 => AbortError 발생)
+//  - 스트리밍 시작 전 오류(대상 없음, 권한 없음 등)는 ApiError로 발생
+//  - <T>: 이벤트 1개의 타입 (예: ChatStreamEvent)
+export async function streamRequest<T>(
+  path: string,
+  body: unknown,
+  onEvent: (event: T) => void,
+  signal?: AbortSignal,
+): Promise<void> {
+  // 1. 요청 보내기 (로그인 토큰 첨부 + 필요 시 재발급은 fetchWithAuth가 처리)
+  const response = await fetchWithAuth(path, { method: 'POST', body, signal })
+  if (!response.ok) {
+    throw new ApiError(response.status, await parseErrorMessage(response))
+  }
+  if (!response.body) {
+    throw new ApiError(0, '응답을 읽을 수 없습니다. 브라우저가 스트리밍을 지원하는지 확인해 주세요.')
+  }
+
+  // 2. 응답을 조각(바이트)으로 읽어서 글자로 바꾸기
+  //  - TextDecoder: 바이트 => 글자 변환기
+  //  - stream: true => 한글처럼 여러 바이트인 글자가 조각 경계에서 잘려도 다음 조각과 이어서 변환
+  const reader = response.body.getReader()
+  const decoder = new TextDecoder()
+  let buffer = '' // 아직 처리하지 못한(덜 도착한) 글자
+
+  while (true) {
+    const { value, done } = await reader.read()
+    if (done) {
+      break
+    }
+    buffer += decoder.decode(value, { stream: true })
+
+    // 3. 빈 줄(\n\n)을 기준으로 이벤트 하나씩 잘라서 처리
+    //  - 조각이 이벤트 중간에서 끊겨 올 수 있으므로, 완성된 이벤트만 처리하고 나머지는 buffer에 남김
+    let boundary = buffer.indexOf('\n\n')
+    while (boundary !== -1) {
+      const block = buffer.slice(0, boundary)
+      buffer = buffer.slice(boundary + 2)
+      for (const line of block.split('\n')) {
+        if (line.startsWith('data: ')) {
+          onEvent(JSON.parse(line.slice('data: '.length)) as T)
+        }
+      }
+      boundary = buffer.indexOf('\n\n')
+    }
+  }
+}

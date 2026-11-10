@@ -2,7 +2,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from src.services.gateway.llm.models import LLMModel, LLMProvider
+from src.services.llm.models import LLMModel, LLMProvider
 
 # 📌 selectinload 를 사용하는 이유
 #  - 비동기 SQLAlchemy에서는 provider.models 처럼 "연결된 데이터"를 나중에 꺼내면

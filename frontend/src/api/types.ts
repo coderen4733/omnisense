@@ -187,3 +187,97 @@ export type ChatStreamEvent =
       first_token_ms: number | null // 첫 글자까지 걸린 시간
     }
   | { type: 'error'; message: string } // 오류
+
+
+// 에이전트에 연결할 수 있는 도구 (ToolRes)
+export interface AgentTool {
+  name: string // 도구 이름 (에이전트에 저장되는 값, 예: calculator)
+  label: string // 화면에 보여줄 이름 (예: 계산기)
+  description: string
+}
+
+//  * 생각 과정 수준 (backend/src/core/llm.py 의 ReasoningEffort)
+//  - none: 끄기 / low: 짧게 / medium: 보통 / high: 길게 (null이면 모델 기본값)
+export type ReasoningEffort = 'none' | 'low' | 'medium' | 'high'
+
+// 에이전트에 연결된 LLM 모델 정보 (AgentModelRes)
+//  - is_usable: 모델과 공급자가 모두 "사용" 상태인지 (false면 실행할 수 없음)
+export interface AgentModel {
+  id: number
+  display_name: string
+  model_id: string
+  provider_name: string
+  provider_type: LlmProviderType // 생각 과정 설정 적용 여부 판단용 
+  supports_tools: boolean
+  supports_reasoning: boolean // 생각 과정 지원 여부
+  is_usable: boolean
+}
+
+// 에이전트 (AgentRes)
+//  - llm_model: 연결된 모델이 삭제되었으면 null (모델을 다시 선택해야 함)
+export interface Agent {
+  id: number
+  name: string
+  description: string | null
+  llm_model: AgentModel | null
+  system_prompt: string
+  temperature: number | null
+  max_tokens: number | null
+  top_p: number | null
+  reasoning_effort: ReasoningEffort | null // 생각 과정 수준 (null: 모델 기본값) 
+  max_iterations: number // 도구 호출 최대 반복 횟수
+  tool_names: string[]
+  is_active: boolean
+  created_by_email: string | null
+  created_at: string
+  updated_at: string
+}
+
+// 에이전트 등록 - 요청 (AgentCreateReq)
+export interface AgentCreateRequest {
+  name: string
+  description: string | null
+  llm_model_id: number
+  system_prompt: string
+  temperature: number | null // null: 공급자 서버 기본값 사용
+  max_tokens: number | null
+  top_p: number | null
+  reasoning_effort: ReasoningEffort | null // 생각 과정 수준 (null: 모델 기본값)
+  max_iterations: number
+  tool_names: string[]
+}
+
+//  * 에이전트 수정 - 요청 (AgentUpdateReq)
+//  - 보내지 않은 값은 바뀌지 않음 / temperature 등은 null을 보내면 비움(기본값 사용)
+export type AgentUpdateRequest = Partial<AgentCreateRequest> & { is_active?: boolean }
+
+// 에이전트 실행 - 요청 (AgentRunReq) - 시스템 프롬프트는 에이전트에 저장된 값을 사용
+export interface AgentRunRequest {
+  messages: { role: 'user' | 'assistant'; content: string }[]
+}
+
+//  * 에이전트 실행 - 스트리밍으로 받는 이벤트 1개
+//  - tool_call / tool_result 는 id로 짝을 맞춤 (예: "1-0" => 1번째 LLM 호출의 0번째 도구)
+export type AgentRunEvent =
+  | { type: 'reasoning'; text: string } // 생각 과정 조각
+  | { type: 'content'; text: string } // 답변 조각
+  | { type: 'tool_call'; id: string; name: string; arguments: Record<string, unknown> } // 도구 실행 시작
+  | {
+      type: 'tool_result' // 도구 실행 결과
+      id: string
+      name: string
+      result: string
+      is_error: boolean
+      duration_ms: number
+    }
+  | {
+      type: 'done' // 끝
+      input_tokens: number // 모든 LLM 호출의 합계
+      output_tokens: number
+      // stop: 정상 / length: 최대 토큰 수에 걸려 잘림 / max_iterations: 최대 반복 횟수에 도달해 멈춤
+      finish_reason: string | null
+      steps: number // LLM을 호출한 횟수
+      latency_ms: number
+      first_token_ms: number | null
+    }
+  | { type: 'error'; message: string } // 오류

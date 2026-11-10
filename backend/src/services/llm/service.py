@@ -18,9 +18,9 @@ from src.core.llm import (
     LLMProviderType,
 )
 from src.core.security import SecretDecryptError, decrypt_secret, encrypt_secret
-from src.services.gateway.llm import repository as llm_repository
-from src.services.gateway.llm.models import LLMModel, LLMProvider
-from src.services.gateway.llm.schemas import (
+from src.services.llm import repository as llm_repository
+from src.services.llm.models import LLMModel, LLMProvider
+from src.services.llm.schemas import (
     AvailableModelsRes,
     ChatReq,
     DeleteRes,
@@ -184,6 +184,19 @@ async def _get_usable_model(session: AsyncSession, llm_model_id: int) -> LLMMode
             detail="비활성화된 모델입니다. 모델을 먼저 활성화해 주세요.",
         )
     return model
+
+
+#  * 다른 기능(에이전트 실행)에서 사용할 공개 함수
+#  - 모델 사용 가능 여부 확인(_get_usable_model)과 접속 정보 만들기(_build_connection)
+#  * 사용할 수 있는 모델인지 확인 + 접속 정보(LLMConnection) 만들기 (에이전트 실행 등에서 사용)
+#  - 모델이 없으면 404, 모델/공급자가 비활성화 상태면 400
+#  - 반환값: (모델, 접속 정보) - 모델 이름은 model.model_id, 도구 지원 여부는 model.supports_tools
+async def get_usable_model_connection(
+    session: AsyncSession,
+    llm_model_id: int,
+) -> tuple[LLMModel, LLMConnection]:
+    model = await _get_usable_model(session, llm_model_id)
+    return model, _build_connection(model.provider)
 
 
 # ============================================================

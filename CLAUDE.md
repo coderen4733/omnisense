@@ -19,7 +19,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **패키지 추가**: `uv add <패키지명>` (개발 도구는 `uv add --dev <패키지명>`)
 
 ## 3. 프론트엔드 개발
-프론트엔드 개발 시에는 `frontend/` 디렉토리에서 진행합니다. (React + TypeScript + Vite, 라우팅 react-router-dom, 아이콘 lucide-react, 폰트 pretendard)
+프론트엔드 개발 시에는 `frontend/` 디렉토리에서 진행합니다. (React + TypeScript + Vite, 라우팅 react-router-dom, 아이콘 lucide-react, 폰트 pretendard, LLM 답변 표시 react-markdown·remark-gfm·remark-math·rehype-katex·katex)
 - **환경 변수**: `frontend/.env`의 `VITE_API_BASE_URL`(백엔드 주소)을 사용하며, 항목은 `frontend/.env.example` 참고
 - **의존성 설치**: `npm install`
 - **개발 서버 실행**: `npm run dev` → http://localhost:3000 (백엔드 서버가 먼저 켜져 있어야 함)

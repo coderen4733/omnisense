@@ -6,8 +6,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.common.response import ResponseSchema
 from src.core.database import get_db_session
-from src.services.gateway.llm import service as llm_service
-from src.services.gateway.llm.schemas import (
+from src.services.iam.auth.dependencies import AdminOrManagerUser, AdminUser
+from src.services.llm import service as llm_service
+from src.services.llm.schemas import (
     AvailableModelsRes,
     ChatReq,
     DeleteRes,
@@ -19,7 +20,6 @@ from src.services.gateway.llm.schemas import (
     ProviderRes,
     ProviderUpdateReq,
 )
-from src.services.iam.auth.dependencies import AdminOrManagerUser, AdminUser
 
 # 📌 권한
 #  - 공급자·모델 등록/수정/삭제, 모델 목록 불러오기: admin만 (AdminUser)

@@ -1,8 +1,9 @@
 from fastapi import APIRouter
 
-from src.services.gateway.llm.router import llm_router
+from src.services.agent.router import agent_router
 from src.services.iam.auth.router import auth_router
 from src.services.iam.user.router import user_router
+from src.services.llm.router import llm_router
 
 api_router = APIRouter()
 
@@ -28,4 +29,11 @@ api_router.include_router(
     llm_router,
     prefix="/llm",
     tags=["LLM 공급자·모델(LLM)"],
+)
+
+# 에이전트(Agent) 라우터
+api_router.include_router(
+    agent_router,
+    prefix="/agents",
+    tags=["에이전트(Agent)"],
 )

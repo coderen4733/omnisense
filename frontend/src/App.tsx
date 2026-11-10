@@ -8,6 +8,8 @@ import { AuthProvider } from './contexts/AuthContext'
 import { ThemeProvider } from './contexts/ThemeContext'
 import { ToastProvider } from './contexts/ToastContext'
 import AccountPage from './pages/account/AccountPage'
+import AgentRunPage from './pages/agents/AgentRunPage'
+import AgentsPage from './pages/agents/AgentsPage'
 import LoginPage from './pages/auth/LoginPage'
 import SignUpPage from './pages/auth/SignUpPage'
 import ComingSoonPage from './pages/ComingSoonPage'
@@ -58,6 +60,10 @@ export default function App() {
                     }
                   />
                   <Route path="/account" element={<AccountPage />} />
+                  {/* 에이전트 목록(/agents)과 테스트 실행(/agents/번호)
+                      (모든 로그인 사용자 - 등록·수정·삭제 버튼은 admin, manager에게만 보임) */}
+                  <Route path="/agents" element={<AgentsPage />} />
+                  <Route path="/agents/:agentId" element={<AgentRunPage />} />
 
                   {/* 2-3. 개발 전 메뉴 => "준비중" 화면 (constants/menu.ts의 ready: false 메뉴) */}
                   {COMING_SOON_MENUS.map((item) => (

@@ -5,6 +5,7 @@ import { useEffect, useId, type ReactNode } from 'react'
 //  - open=false면 아무것도 그리지 않음
 //  - 닫기: X 버튼 / ESC 키 / 바깥(어두운 배경) 클릭
 //  - footer: 아래쪽 버튼 영역 (예: 취소, 저장)
+//  - size: 'md'(기본, 최대 460px) / 'lg'(최대 680px)
 
 interface ModalProps {
   open: boolean
@@ -12,9 +13,10 @@ interface ModalProps {
   onClose: () => void
   children: ReactNode
   footer?: ReactNode
+  size?: 'md' | 'lg'
 }
 
-export default function Modal({ open, title, onClose, children, footer }: ModalProps) {
+export default function Modal({ open, title, onClose, children, footer, size = 'md' }: ModalProps) {
   // useId: 제목과 팝업을 연결하기 위한 고유 id 생성 (화면 낭독기가 팝업 제목을 읽어줌)
   const titleId = useId()
 
@@ -46,7 +48,12 @@ export default function Modal({ open, title, onClose, children, footer }: ModalP
         }
       }}
     >
-      <div className="modal" role="dialog" aria-modal="true" aria-labelledby={titleId}>
+      <div
+        className={size === 'lg' ? 'modal modal-lg' : 'modal'}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+      >
         <div className="modal-header">
           <h2 id={titleId} className="modal-title">
             {title}

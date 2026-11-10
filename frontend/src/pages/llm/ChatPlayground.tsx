@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, type KeyboardEvent } from 'react'
 import { getErrorMessage } from '../../api/client'
 import { streamChat } from '../../api/llm'
 import type { ChatRequest, LlmProvider } from '../../api/types'
+import MarkdownView from '../../components/common/MarkdownView'
 import SelectBox, { type SelectOption } from '../../components/common/SelectBox'
 
 //  * 테스트 대화 화면
@@ -11,7 +12,9 @@ import SelectBox, { type SelectOption } from '../../components/common/SelectBox'
 //  - 오른쪽: 대화창 (답변이 만들어지는 대로 글자가 실시간으로 나타남)
 //  - 대화 내용은 저장하지 않음 (연결 확인용 / 새로고침하면 사라짐)
 //  - 모델은 대화를 기억하지 못하므로, 보낼 때마다 지금까지의 대화 전체를 함께 보냄
-//  - 답변은 글자 그대로 표시함 (HTML로 해석하지 않으므로 답변 안의 코드가 실행될 위험이 없음)
+//  * 답변 표시 방식
+//  - 답변은 마크다운 + 수식으로 해석해서 표시 (MarkdownView - HTML 태그는 실행하지 않으므로 안전)
+//    생각 과정과 사용자 질문은 지금처럼 글자 그대로 표시
 
 // 대화 1건 (사용자 질문 또는 모델 답변)
 interface ChatTurn {
@@ -397,7 +400,12 @@ function AssistantTurn({ turn }: { turn: ChatTurn }) {
         </div>
       )}
 
-      {turn.content && <div className="chat-bubble">{turn.content}</div>}
+      {/* 답변을 마크다운 + 수식으로 표시 (기존: 글자 그대로) */}
+      {turn.content && (
+        <div className="chat-bubble">
+          <MarkdownView text={turn.content} />
+        </div>
+      )}
 
       {turn.error && (
         <div className="chat-notice is-error">

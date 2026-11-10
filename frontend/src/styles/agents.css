@@ -1,0 +1,278 @@
+/*
+ * 에이전트 화면 스타일 (목록 카드, 등록 팝업, 테스트 실행)
+ *  - 대화창(chat-layout, chat-panel, chat-turn 등)은 llm.css 의 테스트 대화 스타일을 함께 사용
+ */
+
+/* ===== 1. 에이전트 목록 카드 ===== */
+
+/* 카드 격자: 한 칸 최소 320px, 화면 폭에 맞춰 한 줄에 들어가는 만큼 배치 */
+.agent-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 20px;
+}
+
+.agent-card {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+/* 아이콘 + 이름 + 사용 여부 */
+.agent-card-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 20px 20px 10px;
+}
+
+/* 로봇 아이콘 (보라색 강조색을 연하게 깐 사각형) */
+.agent-avatar {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--color-accent) 14%, transparent);
+  color: var(--color-accent);
+}
+
+[data-theme='dark'] .agent-avatar {
+  color: var(--color-brand-purple);
+}
+
+/* 이름이 길면 ... 으로 줄임 (마우스를 올리면 전체 이름 표시) */
+.agent-card-title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  font-size: 16px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 설명: 최대 2줄까지만 표시 */
+.agent-card-desc {
+  display: -webkit-box;
+  min-height: 42px;
+  padding: 0 20px;
+  overflow: hidden;
+  color: var(--color-text-secondary);
+  font-size: 14px;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+/* 모델 / 도구 / 최대 반복 (왼쪽 제목 + 오른쪽 값) */
+.agent-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 16px 20px;
+  padding-top: 16px;
+  border-top: 1px dashed var(--color-border);
+  font-size: 13px;
+}
+
+.agent-meta div {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.agent-meta dt {
+  flex: none;
+  width: 64px;
+  padding-top: 2px;
+  color: var(--color-text-muted);
+}
+
+.agent-meta dd {
+  flex: 1;
+  min-width: 0;
+  padding-top: 2px;
+}
+
+/* 테스트 실행 화면의 정보 영역 (카드 안이므로 바깥 여백과 위쪽 선 없음) */
+.agent-meta.agent-meta-plain {
+  margin: 0;
+  padding-top: 0;
+  border-top: none;
+}
+
+.agent-model {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+}
+
+/* 모델 삭제됨 / 사용 안 함 경고 */
+.agent-warning {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--tone-orange-text);
+  font-weight: 600;
+}
+
+.tool-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+/* 아래쪽 버튼 영역 (카드 높이가 달라도 항상 맨 아래에 붙도록 margin-top: auto) */
+.agent-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: auto;
+  padding: 12px 16px 12px 20px;
+  border-top: 1px solid var(--color-border);
+}
+
+/* ===== 2. 에이전트 등록 팝업 ===== */
+
+/* 도구 체크박스 목록 */
+.tool-check-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 14px;
+  background: var(--color-surface-muted);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.tool-check-desc {
+  display: block;
+  color: var(--color-text-secondary);
+  font-size: 13px;
+}
+
+/* 도구를 지원하지 않는 모델을 골랐을 때 (흐리게) */
+.checkbox.is-disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.checkbox.is-disabled input {
+  cursor: not-allowed;
+}
+
+/* Temperature / Max Tokens / Top P / 최대 반복 한 줄에 4칸 (llm.css 의 .param-grid 를 4칸으로) */
+.param-grid.param-grid-4 {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+/* 주황색 안내 문구 (모델이 삭제됨 등) */
+.field-hint.is-warning {
+  color: var(--tone-orange-text);
+}
+
+/* ===== 3. 테스트 실행 ===== */
+
+/* 옵션 값 (숫자 폭을 맞춤) */
+.agent-params {
+  color: var(--color-text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+/* 시스템 프롬프트 미리보기 - 줄바꿈 유지, 길면 스크롤 */
+.prompt-preview {
+  max-height: 240px;
+  padding: 10px 12px;
+  overflow-y: auto;
+  background: var(--color-surface-muted);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+}
+
+/* 도구 실행 1건 (접었다 펼 수 있는 상자) */
+.tool-step {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-left: 3px solid var(--tone-blue-text);
+  border-radius: var(--radius-md);
+  font-size: 13px;
+}
+
+.tool-step.is-error {
+  border-left-color: var(--tone-red-text);
+}
+
+.tool-step summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  cursor: pointer;
+}
+
+.tool-step summary svg {
+  flex: none;
+}
+
+.tool-step-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+  color: var(--color-text-muted);
+}
+
+.tool-step-status.is-success {
+  color: var(--tone-green-text);
+}
+
+.tool-step-status.is-error {
+  color: var(--tone-red-text);
+}
+
+.tool-step-body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 0 12px 12px;
+}
+
+.tool-step-label {
+  color: var(--color-text-muted);
+  font-size: 12px;
+}
+
+/* 입력값 / 결과 (고정폭 글자, 줄바꿈 유지, 길면 스크롤) */
+.tool-step-code {
+  max-height: 200px;
+  margin: 0;
+  padding: 8px 10px;
+  overflow: auto;
+  background: var(--color-surface-muted);
+  border-radius: var(--radius-sm);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12.5px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* ===== 4. 화면 폭에 따른 조정 ===== */
+@media (max-width: 768px) {
+  .agent-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  /* 옵션 4칸 => 2칸 */
+  .param-grid.param-grid-4 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

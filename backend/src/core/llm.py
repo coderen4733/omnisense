@@ -103,15 +103,32 @@ class ChatMessage:
     tool_call_id: str | None = None  # tool 메시지: 어떤 도구 호출의 결과인지
 
 
+#  * 생각 과정 수준(reasoning_effort) 옵션
+#  - 단순한 질문에서 생각 과정을 끄거나 줄여 답변 시간을 줄일 수 있도록
+#    ReasoningEffort 와 GenerationParams.reasoning_effort 추가
+#  * 생각 과정 수준 (None이면 보내지 않음 => 모델 기본값)
+#  - none: 끄기 / low: 짧게 / medium: 보통 / high: 길게
+#  - 생각을 줄이면 답변이 빨라지지만, 여러 단계로 판단해야 하는 질문은 정확도가 떨어질 수 있음
+#  - 현재는 OpenAI 호환 방식(Ollama)만 적용, Bedrock은 무시함 (Nova 2 Lite는 기본이 생각 끔)
+#  - 모델마다 반응이 다름 (Ollama 0.33 측정)
+#    - qwen3.5: none => 생각 과정 완전히 꺼짐
+#    - gpt-oss: none으로도 완전히 꺼지지 않고 짧게 생각함 (low와 비슷)
+#  - ⚠️ vLLM(납품)은 qwen 계열의 생각 끄기 방식이 다름 (chat_template_kwargs 사용)
+#    => 납품 전 vLLM에서 확인 후, 필요하면 아래 _stream_openai_compatible 한 곳만 수정
+ReasoningEffort = Literal["none", "low", "medium", "high"]
+
+
 #  * 답변 생성 옵션 (None이면 보내지 않음 => 공급자 서버의 기본값 사용)
 #  - temperature: 답변의 무작위성 (0에 가까울수록 일정한 답, 높을수록 다양한 답)
 #  - max_tokens : 답변 최대 길이 (토큰 수, 생각 과정도 포함될 수 있음)
 #  - top_p      : 답변 후보 단어의 범위 (보통 temperature와 둘 중 하나만 조절)
+#  - reasoning_effort: 생각 과정 수준 (위 ReasoningEffort 설명 참고)
 @dataclass(frozen=True)
 class GenerationParams:
     temperature: float | None = None
     max_tokens: int | None = None
     top_p: float | None = None
+    reasoning_effort: ReasoningEffort | None = None
 
 
 # 토큰 사용량
@@ -316,6 +333,10 @@ async def _stream_openai_compatible(
         payload["max_tokens"] = params.max_tokens
     if params.top_p is not None:
         payload["top_p"] = params.top_p
+    #  * 생각 과정 수준 전달
+    #  - 값이 있으면 reasoning_effort로 보냄 (Ollama: none이면 qwen3.5의 생각 과정이 꺼짐)
+    if params.reasoning_effort is not None:
+        payload["reasoning_effort"] = params.reasoning_effort
     if tools:
         payload["tools"] = [
             {

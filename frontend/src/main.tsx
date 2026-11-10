@@ -11,7 +11,8 @@ import './styles/global.css'
 import './styles/layout.css'
 import './styles/auth.css'
 import './styles/pages.css'
-import './styles/llm.css' 
+import './styles/llm.css'
+import './styles/agents.css'
 
 import App from './App'
 
