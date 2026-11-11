@@ -36,7 +36,11 @@ export default function Sidebar({ collapsed }: SidebarProps) {
     <aside className={collapsed ? 'sidebar is-collapsed' : 'sidebar'} aria-label="주 메뉴">
       {/* 1. 맨 위: 새 워크플로우 버튼 */}
       <div className="sidebar-top">
-        <NavLink to="/workflows" className="sidebar-new-btn" title="새 워크플로우">
+        {/* [수정] * 새 워크플로우 버튼 연결 [2026-11-10 13:40]
+            [기존] 워크플로우 목록(/workflows)으로만 이동했습니다.
+            [변경] ?new=1 을 붙여 목록 화면에서 "새 워크플로우" 팝업이 바로 열리게 합니다.
+                   (만들기 권한이 없는 사용자는 목록만 보임) */}
+        <NavLink to="/workflows?new=1" className="sidebar-new-btn" title="새 워크플로우">
           <Plus size={18} />
           {!collapsed && <span>새 워크플로우</span>}
         </NavLink>

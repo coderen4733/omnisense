@@ -1,0 +1,816 @@
+/*
+ * [수정] * 실행 패널, 실행 상태 스타일 추가 [2026-11-10 17:25]
+ * [기존] 목록, 편집 화면, 노드 카드 스타일만 있었습니다.
+ * [변경] "6-1. 실행" 부분(실행 패널, 노드 카드의 실행 상태 색, 지나간 연결선)을 추가하고,
+ *        화면 폭에 따른 조정에 실행 패널 폭을 넣었습니다.
+ *
+ * 워크플로우 화면 스타일 (목록의 상태 표시, 편집 화면, 캔버스의 노드 카드, 실행 패널)
+ *  - 목록 카드는 agents.css 의 .agent-card 스타일을 함께 사용
+ *  - 실행 패널의 생각 과정/도구 실행/답변은 llm.css, agents.css 의 대화창 스타일을 함께 사용
+ */
+
+/* ===== 1. 목록: 점검 상태 ===== */
+.wf-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--tone-orange-text);
+  font-weight: 600;
+}
+
+.wf-status.is-ready {
+  color: var(--tone-green-text);
+}
+
+/* ===== 2. 편집 화면 전체 틀 ===== */
+
+/* 화면 높이에 맞춤 (본문 위아래 여백 28px + 48px 제외) - 캔버스가 남은 공간을 모두 차지 */
+.wf-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  height: calc(100vh - var(--header-height) - 76px);
+  min-height: 560px;
+}
+
+/* 위쪽 막대: 뒤로 가기 + 이름 + 저장 상태 + 문제 + 저장 */
+.wf-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.wf-toolbar-title {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.wf-toolbar-title h1 {
+  overflow: hidden;
+  font-size: 20px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.wf-toolbar-meta {
+  color: var(--color-text-muted);
+  font-size: 13px;
+}
+
+/* 문제 수 버튼 (문제가 없으면 초록, 있으면 주황) */
+.wf-issue-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 12px;
+  border-radius: 999px;
+  background: var(--tone-green-bg);
+  color: var(--tone-green-text);
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.wf-issue-btn.has-issue {
+  background: var(--tone-orange-bg);
+  color: var(--tone-orange-text);
+}
+
+/* 문제 목록 상자 */
+.wf-issues {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 180px;
+  padding: 12px 16px;
+  overflow-y: auto;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-size: 13px;
+}
+
+.wf-issues ul {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.wf-issues li {
+  display: flex;
+  gap: 8px;
+}
+
+.wf-issues li .text-btn,
+.wf-issues li strong {
+  flex: none;
+  margin-left: 0;
+}
+
+/* 노드 목록 | 캔버스 | 설정 패널 */
+.wf-body {
+  display: grid;
+  flex: 1;
+  grid-template-columns: 180px minmax(0, 1fr) 320px;
+  gap: 12px;
+  min-height: 0; /* 안쪽(설정 패널)이 길어져도 화면 밖으로 넘치지 않고 패널만 스크롤 */
+}
+
+/* 보기 전용(노드 목록 없음) */
+.wf-body:not(:has(.wf-palette)) {
+  grid-template-columns: minmax(0, 1fr) 320px;
+}
+
+/* ===== 3. 왼쪽: 노드 목록 ===== */
+.wf-palette {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px;
+  overflow-y: auto;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+}
+
+.wf-palette-title {
+  color: var(--color-text-secondary);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.wf-palette-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  background: var(--color-surface-muted);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  text-align: left;
+  cursor: grab;
+}
+
+.wf-palette-item:hover {
+  border-color: var(--color-border-strong);
+  background: var(--color-hover);
+}
+
+.wf-palette-item:active {
+  cursor: grabbing;
+}
+
+/* word-break: keep-all => 한글 단어 중간에서 줄이 바뀌지 않도록 (띄어쓰기에서만 줄바꿈) */
+.wf-palette-desc {
+  display: block;
+  color: var(--color-text-muted);
+  font-size: 12px;
+  word-break: keep-all;
+}
+
+.wf-palette-hint {
+  margin-top: 4px;
+  line-height: 1.5;
+  word-break: keep-all;
+}
+
+/* ===== 4. 가운데: 캔버스 ===== */
+.wf-canvas {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+}
+
+/*  * React Flow 색상을 우리 색상 변수로 맞춤 (라이트/다크 모드 자동 적용)
+    - --xy-... : React Flow가 제공하는 색상 변수 */
+.wf-canvas .react-flow {
+  --xy-background-color: var(--color-bg);
+  --xy-background-pattern-color: var(--color-border-strong);
+  --xy-edge-stroke-default: var(--color-text-muted);
+  --xy-edge-stroke-selected-default: var(--color-accent);
+  --xy-connectionline-stroke-default: var(--color-accent);
+  --xy-handle-background-color-default: var(--color-surface);
+  --xy-handle-border-color-default: var(--color-text-secondary);
+  --xy-edge-label-background-color-default: var(--color-surface);
+  --xy-edge-label-color-default: var(--color-text);
+  --xy-minimap-background-color-default: var(--color-surface);
+  /* 작은 지도에서 "지금 보이는 영역 밖"을 덮는 반투명 색 */
+  --xy-minimap-mask-background-color-default: color-mix(in srgb, var(--color-bg) 70%, transparent);
+  --xy-controls-button-background-color-default: var(--color-surface);
+  --xy-controls-button-background-color-hover-default: var(--color-hover);
+  --xy-controls-button-color-default: var(--color-text);
+  --xy-controls-button-border-color-default: var(--color-border);
+}
+
+/* 연결점 (조금 크게 - 잡기 쉽도록) */
+.wf-canvas .react-flow__handle {
+  width: 11px;
+  height: 11px;
+  border-width: 2px;
+}
+
+.wf-canvas .react-flow__handle.wf-handle-true {
+  border-color: var(--tone-green-text);
+}
+
+.wf-canvas .react-flow__handle.wf-handle-false {
+  border-color: var(--tone-red-text);
+}
+
+/* 조건 분기에서 나가는 선 색 (참: 초록 / 거짓: 빨강) */
+.wf-canvas .wf-edge-true .react-flow__edge-path {
+  stroke: var(--tone-green-text);
+}
+
+.wf-canvas .wf-edge-false .react-flow__edge-path {
+  stroke: var(--tone-red-text);
+}
+
+.wf-canvas .react-flow__edge-text {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* 작은 지도: 테두리 + 노드 종류별 색 (노드 카드 위쪽 선 색과 같게) */
+.wf-canvas .react-flow__minimap {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.wf-canvas .react-flow__minimap-node.wf-mini-start {
+  fill: var(--tone-green-text);
+}
+
+.wf-canvas .react-flow__minimap-node.wf-mini-agent {
+  fill: var(--color-accent);
+}
+
+.wf-canvas .react-flow__minimap-node.wf-mini-condition {
+  fill: var(--tone-orange-text);
+}
+
+.wf-canvas .react-flow__minimap-node.wf-mini-end {
+  fill: var(--tone-blue-text);
+}
+
+/* ===== 5. 노드 카드 ===== */
+.wf-node {
+  width: 240px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-strong);
+  border-top: 3px solid var(--wf-tone);
+  border-radius: 10px;
+  box-shadow: var(--shadow-sm);
+  font-size: 12px;
+}
+
+.wf-node.is-selected {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-accent) 35%, transparent);
+}
+
+.wf-node.has-issue:not(.is-selected) {
+  border-color: var(--tone-orange-text);
+  border-top-color: var(--wf-tone);
+}
+
+.wf-node-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px 6px;
+}
+
+/* 노드 종류 아이콘 (노드 카드, 노드 목록, 설정 패널에서 함께 사용) */
+.wf-node-icon {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--wf-tone) 14%, transparent);
+  color: var(--wf-tone);
+}
+
+/* 노드 종류별 색상 (--wf-tone 변수 하나로 아이콘, 위쪽 선 색을 함께 바꿈) */
+.tone-green {
+  --wf-tone: var(--tone-green-text);
+}
+
+.tone-purple {
+  --wf-tone: var(--color-accent);
+}
+
+[data-theme='dark'] .tone-purple {
+  --wf-tone: var(--color-brand-purple);
+}
+
+.tone-orange {
+  --wf-tone: var(--tone-orange-text);
+}
+
+.tone-blue {
+  --wf-tone: var(--tone-blue-text);
+}
+
+.wf-node-heading {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.wf-node-type {
+  color: var(--color-text-muted);
+  font-size: 11px;
+}
+
+.wf-node-title {
+  overflow: hidden;
+  font-size: 14px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.wf-node-issue {
+  display: inline-flex;
+  color: var(--tone-orange-text);
+}
+
+.wf-node-body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 0 12px 10px;
+  overflow-wrap: anywhere;
+}
+
+.wf-node-list {
+  margin: 0;
+  padding-left: 16px;
+}
+
+.wf-node-muted {
+  color: var(--color-text-muted);
+}
+
+.wf-node-strong {
+  font-weight: 600;
+}
+
+.wf-node-code {
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: var(--color-surface-muted);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 11.5px;
+}
+
+/* 조건 분기: 참/거짓 출구 이름표 (오른쪽 연결점 높이에 맞춤) */
+.wf-node-branches {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  margin-top: 4px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.wf-branch-true {
+  color: var(--tone-green-text);
+}
+
+.wf-branch-false {
+  color: var(--tone-red-text);
+}
+
+/* ===== 6. 오른쪽: 설정 패널 ===== */
+.wf-panel {
+  min-height: 0;
+  overflow-y: auto;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+}
+
+.wf-settings {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 16px;
+}
+
+.wf-settings-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.wf-settings-heading {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  min-width: 0;
+}
+
+.wf-settings-issues {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  padding: 10px 12px;
+  list-style: none;
+  background: var(--tone-orange-bg);
+  border-radius: var(--radius-md);
+  color: var(--tone-orange-text);
+  font-size: 13px;
+}
+
+.wf-settings-issues li {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.wf-settings-issues svg {
+  flex: none;
+  margin-top: 3px;
+}
+
+/* fieldset 기본 테두리/여백 없애기 (보기 전용일 때 disabled 처리용으로만 사용) */
+.wf-fieldset {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+
+/* "앞 노드 값 넣기" 버튼 목록 */
+.wf-variables {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.wf-variables-title {
+  color: var(--color-text-muted);
+  font-size: 12px;
+}
+
+.wf-variables .chip {
+  height: 26px;
+  font-size: 12px;
+}
+
+/* 시작 노드 입력 칸 1줄: [표시 이름 | 이름 | 종류 | 필수] [삭제] */
+.wf-input-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 4px 6px;
+  padding: 10px;
+  background: var(--color-surface-muted);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.wf-input-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+  align-items: center;
+}
+
+.wf-input-grid .input {
+  width: 100%;
+  min-width: 0;
+}
+
+.wf-input-grid .select {
+  min-width: 0;
+}
+
+.wf-input-error {
+  grid-column: 1 / -1;
+}
+
+.wf-agent-link {
+  align-self: flex-start;
+  margin-left: 0;
+  font-size: 12px;
+}
+
+/* 아무 노드도 선택하지 않았을 때의 안내 */
+.wf-guide {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px;
+  color: var(--color-text-secondary);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.wf-guide strong {
+  color: var(--color-text);
+  font-size: 15px;
+}
+
+.wf-guide ul {
+  margin: 0;
+  padding-left: 18px;
+}
+
+.wf-guide li + li {
+  margin-top: 6px;
+}
+
+/* ===== 6-1. 실행 ===== */
+
+/* 실행 패널이 열리면 오른쪽 패널을 넓게 (답변, 도구 결과를 읽기 쉽도록) */
+.wf-body.is-run {
+  grid-template-columns: 180px minmax(0, 1fr) 400px;
+}
+
+.wf-body.is-run:not(:has(.wf-palette)) {
+  grid-template-columns: minmax(0, 1fr) 400px;
+}
+
+/* 위쪽 "실행" 버튼 - 실행 패널이 열려 있을 때 */
+.wf-toolbar .btn.is-active {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+/* 실행 중에는 노드 목록을 흐리게 (추가 잠금) */
+.wf-palette-item:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* --- 노드 카드의 실행 상태 (캔버스) --- */
+.wf-node-run {
+  display: inline-flex;
+  color: var(--color-text-muted);
+}
+
+.wf-node.run-running {
+  border-color: var(--color-accent);
+  animation: wf-running 1.4s ease-in-out infinite;
+}
+
+.wf-node.run-running .wf-node-run {
+  color: var(--color-accent);
+}
+
+.wf-node.run-done {
+  border-color: var(--tone-green-text);
+}
+
+.wf-node.run-done .wf-node-run {
+  color: var(--tone-green-text);
+}
+
+.wf-node.run-error {
+  border-color: var(--tone-red-text);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--tone-red-text) 30%, transparent);
+}
+
+.wf-node.run-error .wf-node-run {
+  color: var(--tone-red-text);
+}
+
+.wf-node.run-stopped {
+  border-style: dashed;
+}
+
+/* 이번 실행에서 거치지 않은 노드 */
+.wf-node.run-skipped {
+  opacity: 0.45;
+}
+
+/* 실행 중인 노드 테두리가 은은하게 깜빡임 */
+@keyframes wf-running {
+  0%,
+  100% {
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-accent) 15%, transparent);
+  }
+  50% {
+    box-shadow: 0 0 0 6px color-mix(in srgb, var(--color-accent) 30%, transparent);
+  }
+}
+
+/* 이번 실행에서 지나간 연결선 (굵게 + 강조색) */
+.wf-canvas .wf-edge-passed .react-flow__edge-path {
+  stroke: var(--color-accent);
+  stroke-width: 2.5;
+}
+
+/* --- 실행 패널 --- */
+.wf-run {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 16px;
+}
+
+.wf-run-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.wf-run-form .wf-fieldset {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.wf-required {
+  color: var(--tone-red-text);
+}
+
+.wf-run-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* 실행한 노드 1개 (왼쪽 굵은 선 = 노드 종류 색) */
+.wf-run-step {
+  padding: 10px 12px;
+  border: 1px solid var(--color-border);
+  border-left: 3px solid var(--wf-tone);
+  border-radius: 10px;
+  scroll-margin: 12px; /* 노드를 눌러 스크롤할 때 위쪽 여백 */
+}
+
+.wf-run-step.is-running {
+  border-color: var(--color-accent);
+  border-left-color: var(--wf-tone);
+}
+
+.wf-run-step.is-error {
+  border-color: var(--tone-red-text);
+  border-left-color: var(--wf-tone);
+}
+
+.wf-run-step-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.wf-run-step-header strong {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.wf-run-step-header .wf-node-icon {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+}
+
+.wf-run-step-header .tool-step-status {
+  margin-left: 0;
+}
+
+.wf-run-step-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+  font-size: 13px;
+}
+
+/* 시작 노드 입력값 (이름: 값) */
+.wf-run-values {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+}
+
+.wf-run-values div {
+  display: grid;
+  grid-template-columns: 80px minmax(0, 1fr);
+  gap: 8px;
+}
+
+.wf-run-values dt {
+  color: var(--color-text-muted);
+}
+
+.wf-run-values dd {
+  margin: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* 조건 분기 결과 (비교식 + 참/거짓) */
+.wf-run-condition {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.wf-run-condition .wf-node-code {
+  overflow-wrap: anywhere;
+}
+
+.wf-run-condition .pill.wf-branch-true {
+  background: var(--tone-green-bg);
+}
+
+.wf-run-condition .pill.wf-branch-false {
+  background: var(--tone-red-bg);
+}
+
+/* 최종 결과 */
+.wf-run-result {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid var(--tone-green-text);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--tone-green-bg) 50%, transparent);
+  font-size: 14px;
+}
+
+.wf-run-result-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.wf-run-result-header strong {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--tone-green-text);
+}
+
+/* ===== 7. 화면 폭에 따른 조정 ===== */
+@media (max-width: 1200px) {
+  .wf-body {
+    grid-template-columns: 170px minmax(0, 1fr) 300px;
+  }
+
+  .wf-body.is-run {
+    grid-template-columns: 170px minmax(0, 1fr) 360px;
+  }
+
+  .wf-body.is-run:not(:has(.wf-palette)) {
+    grid-template-columns: minmax(0, 1fr) 360px;
+  }
+}
+
+/* 좁은 화면: 노드 목록은 위쪽 한 줄, 설정 패널은 캔버스 아래 */
+@media (max-width: 960px) {
+  .wf-editor {
+    height: auto;
+  }
+
+  .wf-body,
+  .wf-body:not(:has(.wf-palette)),
+  .wf-body.is-run,
+  .wf-body.is-run:not(:has(.wf-palette)) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .wf-palette {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+
+  .wf-palette-hint {
+    display: none;
+  }
+
+  .wf-canvas {
+    height: 60vh;
+  }
+}

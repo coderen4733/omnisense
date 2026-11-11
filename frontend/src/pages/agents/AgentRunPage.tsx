@@ -1,21 +1,16 @@
-import {
-  ArrowLeft,
-  CircleAlert,
-  CircleCheck,
-  LoaderCircle,
-  RotateCcw,
-  Send,
-  Square,
-  TriangleAlert,
-  Wrench,
-} from 'lucide-react'
+// [수정] * 생각 과정/도구 실행/답변 표시 부분을 공용 부품으로 옮김 [2026-11-10 16:55]
+// [기존] RunPart 타입, applyEvent, ToolStep, toSeconds 와 조각 표시 코드가 이 파일 안에 있었습니다.
+// [변경] components/agent/RunParts.tsx 로 옮기고 여기서는 가져다 씁니다.
+//        (워크플로우 실행 패널에서도 같은 모양으로 보여주기 위함 - 화면 동작은 그대로)
+
+import { ArrowLeft, CircleAlert, LoaderCircle, RotateCcw, Send, Square, TriangleAlert } from 'lucide-react'
 import { useEffect, useRef, useState, type KeyboardEvent } from 'react'
 import { Link, useParams } from 'react-router-dom'
 
 import { getAgent, getAgentTools, streamAgentRun } from '../../api/agents'
 import { getErrorMessage } from '../../api/client'
-import type { Agent, AgentRunEvent, AgentRunRequest, AgentTool } from '../../api/types'
-import MarkdownView from '../../components/common/MarkdownView'
+import type { Agent, AgentRunRequest, AgentTool } from '../../api/types'
+import { applyRunEvent, RunPartList, toSeconds, type RunPart } from '../../components/agent/RunParts'
 import PageHeader from '../../components/common/PageHeader'
 import { REASONING_LABEL } from '../../constants/agent'
 import { AgentModelLabel } from './AgentsPage'
@@ -24,21 +19,7 @@ import { AgentModelLabel } from './AgentsPage'
 //  - 왼쪽: 에이전트 정보 (모델, 도구, 시스템 프롬프트, 옵션)
 //  - 오른쪽: 대화창 - 생각 과정, 도구 실행(입력값/결과), 답변을 진행되는 순서대로 보여줌
 //  - 대화 내용은 저장하지 않음 (새로고침하면 사라짐)
-//  - 답변은 마크다운 + 수식으로 해석해서 표시 (MarkdownView - HTML 태그는 실행하지 않으므로 안전)
-//    생각 과정, 도구 입력값/결과, 사용자 질문은 지금처럼 글자 그대로 표시
-
-//  * 모델 답변 안의 조각 1개 (도착한 순서대로 쌓임)
-//  - reasoning: 생각 과정 / content: 답변 글 / tool: 도구 실행 (result가 없으면 실행 중)
-type RunPart =
-  | { kind: 'reasoning'; text: string }
-  | { kind: 'content'; text: string }
-  | {
-      kind: 'tool'
-      id: string // tool_call 과 tool_result 의 짝을 맞추는 번호
-      name: string
-      arguments: Record<string, unknown>
-      result?: { text: string; isError: boolean; durationMs: number }
-    }
+//  - 생각 과정, 도구 실행, 답변 표시는 components/agent/RunParts.tsx 참고
 
 // 대화 1건 (사용자 질문 또는 에이전트 답변)
 interface RunTurn {
@@ -58,9 +39,6 @@ interface RunTurn {
   stopped?: boolean
 }
 
-// 밀리초 => "1.23초"
-const toSeconds = (ms: number) => `${(ms / 1000).toFixed(2)}초`
-
 // 에이전트 답변의 "답변 글"만 이어 붙이기 (다음 질문 때 대화 기록으로 보냄)
 const answerText = (turn: RunTurn) =>
   turn.parts
@@ -68,30 +46,6 @@ const answerText = (turn: RunTurn) =>
     .map((part) => part.text)
     .join('\n')
     .trim()
-
-//  * 받은 이벤트 1개를 답변 조각 목록에 반영 (원래 목록은 바꾸지 않고 새 목록을 돌려줌)
-//  - 생각 과정/답변 글: 마지막 조각과 같은 종류면 이어 붙이고, 다르면 새 조각 추가
-//  - 도구 실행 결과: 같은 id의 도구 조각을 찾아 결과를 채움
-function applyEvent(parts: RunPart[], event: AgentRunEvent): RunPart[] {
-  if (event.type === 'reasoning' || event.type === 'content') {
-    const last = parts[parts.length - 1]
-    if (last && last.kind === event.type) {
-      return [...parts.slice(0, -1), { ...last, text: last.text + event.text }]
-    }
-    return [...parts, { kind: event.type, text: event.text }]
-  }
-  if (event.type === 'tool_call') {
-    return [...parts, { kind: 'tool', id: event.id, name: event.name, arguments: event.arguments }]
-  }
-  if (event.type === 'tool_result') {
-    return parts.map((part) =>
-      part.kind === 'tool' && part.id === event.id
-        ? { ...part, result: { text: event.result, isError: event.is_error, durationMs: event.duration_ms } }
-        : part,
-    )
-  }
-  return parts
-}
 
 // 에이전트를 실행할 수 없는 이유 (실행할 수 있으면 null)
 function blockedReason(agent: Agent): string | null {
@@ -224,7 +178,7 @@ export default function AgentRunPage() {
           } else if (event.type === 'error') {
             updateAssistant((turn) => ({ ...turn, error: event.message }))
           } else {
-            updateAssistant((turn) => ({ ...turn, parts: applyEvent(turn.parts, event) }))
+            updateAssistant((turn) => ({ ...turn, parts: applyRunEvent(turn.parts, event) }))
           }
         },
         controller.signal,
@@ -432,29 +386,7 @@ function AgentTurn({ turn, toolLabel, maxIterations }: AgentTurnProps) {
 
   return (
     <div className="chat-turn is-assistant">
-      {turn.parts.map((part, index) => {
-        if (part.kind === 'reasoning') {
-          // 지금 생각 과정을 받는 중이면 펼침, 다른 조각이 이어서 오면 접힘 (ChatPlayground.tsx 설명 참고)
-          const thinking = !finished && part === lastPart
-          return (
-            <details key={index} className="reasoning" open={thinking ? true : undefined}>
-              <summary>
-                {thinking ? '생각하는 중...' : `생각 과정 보기 (${part.text.length.toLocaleString()}자)`}
-              </summary>
-              <div className="reasoning-body">{part.text}</div>
-            </details>
-          )
-        }
-        if (part.kind === 'content') {
-          // 답변을 마크다운 + 수식으로 표시 (기존: 글자 그대로)
-          return (
-            <div key={index} className="chat-bubble">
-              <MarkdownView text={part.text} />
-            </div>
-          )
-        }
-        return <ToolStep key={index} part={part} label={toolLabel(part.name)} stopped={finished} />
-      })}
+      <RunPartList parts={turn.parts} finished={finished} toolLabel={toolLabel} />
 
       {waiting && (
         <div className="chat-waiting">
@@ -491,52 +423,5 @@ function AgentTurn({ turn, toolLabel, maxIterations }: AgentTurnProps) {
         </div>
       )}
     </div>
-  )
-}
-
-//  * 도구 실행 1건 - 접었다 펼 수 있는 상자 (펼치면 입력값과 결과를 보여줌)
-//  - stopped: 답변이 끝났는데 결과가 없음 => 실행 도중 중지/오류로 끊긴 것
-function ToolStep({ part, label, stopped }: { part: Extract<RunPart, { kind: 'tool' }>; label: string; stopped: boolean }) {
-  const { result } = part
-  const className = result?.isError ? 'tool-step is-error' : 'tool-step'
-
-  return (
-    <details className={className}>
-      <summary>
-        <Wrench size={14} />
-        <strong>{label}</strong>
-        {result ? (
-          result.isError ? (
-            <span className="tool-step-status is-error">
-              <CircleAlert size={14} />
-              오류
-            </span>
-          ) : (
-            <span className="tool-step-status is-success">
-              <CircleCheck size={14} />
-              완료 ({toSeconds(result.durationMs)})
-            </span>
-          )
-        ) : stopped ? (
-          <span className="tool-step-status">중단됨</span>
-        ) : (
-          <span className="tool-step-status">
-            <LoaderCircle size={14} className="spin" />
-            실행 중...
-          </span>
-        )}
-      </summary>
-      <div className="tool-step-body">
-        <span className="tool-step-label">입력값</span>
-        {/* JSON.stringify(값, null, 2): 보기 좋게 줄바꿈 + 들여쓰기 2칸 */}
-        <pre className="tool-step-code">{JSON.stringify(part.arguments, null, 2)}</pre>
-        {result && (
-          <>
-            <span className="tool-step-label">결과</span>
-            <pre className="tool-step-code">{result.text}</pre>
-          </>
-        )}
-      </div>
-    </details>
   )
 }

@@ -60,22 +60,39 @@ _TOOLS: list[Tool] = [
     Tool(
         definition=ToolDefinition(
             name="get_current_time",
+            # [수정] * 나라/도시 이름(location)으로도 조회할 수 있게 변경 [2026-11-11 10:30]
+            # [기존] timezone(IANA 시간대 이름)만 받았습니다.
+            # [변경] location(나라/도시 이름)을 추가하고,
+            #        모델이 location 을 쓰도록 설명(description)에 안내합니다.
+            #        화면 설명(summary)도 함께 수정했습니다.
             description=(
                 "현재 날짜, 시각, 요일을 조회합니다. "
-                "오늘 날짜나 지금 시각이 필요한 질문에 사용하세요."
+                "오늘 날짜나 지금 시각이 필요한 질문에 사용하세요. "
+                "다른 나라나 도시의 시각은 location 에 이름을 그대로 넣으세요. "
+                "(시간대 이름을 몰라도 됨, 한국어/영어 모두 가능)"
             ),
             parameters={
                 "type": "object",
                 "properties": {
+                    "location": {
+                        "type": "string",
+                        "description": "나라 또는 도시 이름 (예: 캐나다, 러시아, 뉴욕, Germany)",
+                    },
                     "timezone": {
                         "type": "string",
-                        "description": "IANA 시간대 이름 (예: Asia/Seoul, UTC), 생략 시 한국",
-                    }
+                        "description": (
+                            "IANA 시간대 이름 또는 UTC 시차 (예: Europe/Moscow, UTC+3) "
+                            "- location 을 넣었으면 생략"
+                        ),
+                    },
                 },
             },
         ),
         label="현재 시각",
-        summary="현재 날짜, 시각, 요일을 알려줍니다. (기본 시간대: 한국)",
+        summary=(
+            "현재 날짜, 시각, 요일을 알려줍니다. "
+            "나라/도시 이름으로도 조회할 수 있습니다. (기본: 한국)"
+        ),
         handler=builtin.get_current_time,
     ),
     Tool(

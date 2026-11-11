@@ -1,3 +1,14 @@
+# [수정] * 현재 시각: 나라/도시 이름으로 조회 / 계산기: 0으로 시작하는 숫자 허용 [2026-11-11 10:30]
+# [기존] 현재 시각은 "Europe/Moscow" 같은 정확한 IANA 시간대 이름만 받아서,
+#        모델이 "Asia/Moscow"(잘못된 이름), "UTC+3" 을 보내거나
+#        시간대를 모르는 나라(캐나다 등)는 실패했습니다.
+#        계산기는 "2026 + 03 + 01" 처럼 0으로 시작하는 숫자가 있으면 형식 오류가 났습니다.
+#        (파이썬 문법에서 03 같은 숫자는 허용되지 않음 - 시각을 더할 때 자주 생김)
+# [변경] 현재 시각은 location(나라/도시 이름, 한국어/영어)도 받고, 시간대 이름이 조금 틀려도
+#        timezones.py 의 resolve_location 으로 찾아서 조회합니다. 결과에 장소, 기준 도시, UTC 시차,
+#        시간대가 여러 개인 나라의 안내 문구를 함께 돌려줍니다.
+#        계산기는 계산 전에 숫자 앞의 0을 지웁니다. (03 => 3, 결과 표시는 보낸 식 그대로)
+
 #  * 기본 내장 도구 (에이전트가 호출할 수 있는 도구 중 "서버 안에 직접 만든" 도구)
 #  - 외부 접속 없이 서버 안에서만 동작하는 안전한 도구만 둠
 #  - 에이전트의 도구 호출 과정(질문 => 도구 실행 => 결과로 답변)이 잘 동작하는지 확인하는 용도
@@ -12,10 +23,13 @@ import ast  # 파이썬 식을 "실행하지 않고" 구조(트리)로 분석하
 import json
 import math
 import operator  # +, -, * 같은 연산을 함수로 쓸 수 있게 해주는 표준 라이브러리
+import re
 from collections.abc import Callable
 from datetime import datetime, timedelta, timezone
 from typing import Any
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError  # 시간대(예: Asia/Seoul) 정보
+
+from src.services.tool.timezones import resolve_location
 
 
 # 도구 실행 실패 (모델이 잘못된 값을 보낸 경우 등) - 메시지는 모델과 화면에 그대로 전달됨
@@ -43,35 +57,55 @@ _DEFAULT_TIMEZONE_FALLBACK = timezone(timedelta(hours=9), "KST")
 _WEEKDAYS = ["월요일", "화요일", "수요일", "목요일", "금요일", "토요일", "일요일"]
 
 
+#  * 현재 시각 조회
+#  - location: 나라/도시 이름 (예: 캐나다, Russia, 뉴욕) - 모델이 가장 쉽게 쓸 수 있는 방법
+#  - timezone: IANA 시간대 이름 또는 UTC 시차 (예: Europe/Moscow, UTC+3) - 예전 방식도 그대로 지원
+#  - 둘 다 없으면 한국 시각
+#  - 둘 다 timezones.py 의 resolve_location 으로 찾음 (나라 이름을 timezone 에 넣어도 찾아줌)
 async def get_current_time(arguments: dict[str, Any]) -> str:
-    # 1. 시간대 확인 (보내지 않았으면 기본 시간대)
-    timezone_name = arguments.get("timezone") or DEFAULT_TIMEZONE
-    if not isinstance(timezone_name, str):
-        raise ToolError("timezone은 문자열이어야 합니다. (예: Asia/Seoul)")
+    # 1. 조회할 장소 확인 (location 우선)
+    query = arguments.get("location") or arguments.get("timezone")
+    if query is not None and not isinstance(query, str):
+        raise ToolError("location(나라/도시 이름) 또는 timezone 은 문자열이어야 합니다.")
 
-    # 2. 시간대 정보 불러오기
-    #  - ValueError: "../etc" 처럼 시간대 이름 형식이 아닌 값
-    tz: ZoneInfo | timezone
-    try:
-        tz = ZoneInfo(timezone_name)
-    except (ZoneInfoNotFoundError, ValueError) as err:
-        if timezone_name != DEFAULT_TIMEZONE:
+    # 2. 시간대 찾기
+    if not query or not query.strip():
+        # 2-1. 장소를 보내지 않음 => 한국 (서버에 시간대 정보가 없으면 UTC+9 로 대신 계산)
+        try:
+            tz: ZoneInfo | timezone = ZoneInfo(DEFAULT_TIMEZONE)
+        except (ZoneInfoNotFoundError, ValueError):
+            tz = _DEFAULT_TIMEZONE_FALLBACK
+        timezone_name, location, reference, note = DEFAULT_TIMEZONE, "한국", "서울", None
+    else:
+        # 2-2. 나라/도시/시간대 이름 => 시간대 (못 찾으면 모델이 다시 시도할 수 있게 방법을 알려줌)
+        resolved = resolve_location(query)
+        if resolved is None:
             raise ToolError(
-                f"알 수 없는 시간대입니다: {timezone_name} (예: Asia/Seoul, UTC, America/New_York)"
-            ) from err
-        tz = _DEFAULT_TIMEZONE_FALLBACK
+                f"'{query}' 의 시간대를 찾지 못했습니다. location 에 나라나 도시 이름"
+                "(예: 캐나다, 뉴욕, Germany)을 넣거나, timezone 에 IANA 시간대 이름"
+                "(예: Europe/Moscow) 또는 UTC 시차(예: UTC+3)를 넣어 주세요."
+            )
+        tz = resolved.tz
+        timezone_name, location = resolved.timezone, resolved.location
+        reference, note = resolved.reference, resolved.note
 
     # 3. 현재 시각 계산 + 결과 만들기
+    #  - utc_offset: UTC와의 시차 (예: +03:00) - isoformat() 끝부분과 같은 값
     now = datetime.now(tz)
-    return _to_json(
-        {
-            "timezone": timezone_name,
-            "datetime": now.isoformat(timespec="seconds"),  # 예) 2026-11-03T14:05:12+09:00
-            "date": now.strftime("%Y-%m-%d"),
-            "time": now.strftime("%H:%M:%S"),
-            "weekday": _WEEKDAYS[now.weekday()],  # weekday(): 월요일=0 ~ 일요일=6
-        }
-    )
+    result: dict[str, Any] = {
+        "location": location,  # 예) 러시아
+        "reference_city": reference,  # 나라를 조회한 경우 기준 도시 (예: 모스크바), 아니면 None
+        "timezone": timezone_name,  # 예) Europe/Moscow
+        "utc_offset": now.isoformat(timespec="seconds")[-6:],
+        "datetime": now.isoformat(timespec="seconds"),  # 예) 2026-11-03T14:05:12+09:00
+        "date": now.strftime("%Y-%m-%d"),
+        "time": now.strftime("%H:%M:%S"),
+        "weekday": _WEEKDAYS[now.weekday()],  # weekday(): 월요일=0 ~ 일요일=6
+    }
+    # 시간대가 여러 개인 나라만 안내 문구 추가
+    if note:
+        result["note"] = note
+    return _to_json(result)
 
 
 # ============================================================
@@ -169,6 +203,14 @@ def _evaluate(node: ast.AST) -> int | float:
     )
 
 
+#  * 숫자 앞의 0 지우기 (예: "2026 + 03 + 01" => "2026 + 3 + 1")
+#  - 파이썬 문법에서는 03 처럼 0으로 시작하는 정수를 쓸 수 없음 (옛날 8진수 표기와 헷갈리기 때문)
+#  - 정규식 설명: 앞에 글자/숫자/점이 없는 위치에서, 뒤에 숫자가 이어지는 0들을 찾음
+#    - 0.5, 1.05 의 0 은 그대로 (뒤가 점이거나 앞이 점), 10 의 0 도 그대로 (앞이 숫자)
+#    - "00" 은 "0" 이 됨 (마지막 0 은 뒤에 숫자가 없으므로 남음)
+_LEADING_ZEROS = re.compile(r"(?<![\w.])0+(?=\d)")
+
+
 # 결과 숫자 => 보기 좋은 문자열 (실수는 유효숫자 15자리, 예: 0.1+0.2 => 0.3)
 def _format_number(value: int | float) -> str:
     if isinstance(value, float):
@@ -184,9 +226,10 @@ async def calculator(arguments: dict[str, Any]) -> str:
     if len(expression) > MAX_EXPRESSION_LENGTH:
         raise ToolError(f"계산식은 {MAX_EXPRESSION_LENGTH}자 이하여야 합니다.")
 
-    # 2. 식을 구조(트리)로 분석 (mode="eval": 하나의 "식"만 허용, 여러 줄 코드는 불가)
+    #  2. 식을 구조(트리)로 분석 (mode="eval": 하나의 "식"만 허용, 여러 줄 코드는 불가)
+    #  - 분석 전에 숫자 앞의 0을 지움 (예: 03 => 3)
     try:
-        tree = ast.parse(expression.strip(), mode="eval")
+        tree = ast.parse(_LEADING_ZEROS.sub("", expression.strip()), mode="eval")
     except SyntaxError as err:
         raise ToolError(f"계산식 형식이 올바르지 않습니다: {expression}") from err
 

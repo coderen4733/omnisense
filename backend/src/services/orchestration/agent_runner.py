@@ -1,12 +1,12 @@
 #  * 에이전트 실행 엔진
 #  - 질문을 받아 "LLM 호출 => 도구 실행 => 결과를 다시 LLM에 전달"을 반복하여 최종 답변을 만듦
 #  - DB를 사용하지 않음 (필요한 값은 agent/service.py 의 prepare_run 이 미리 PreparedRun에 담아 줌)
-#    => 나중에 워크플로우의 에이전트 노드에서도 이 파일을 그대로 다시 사용할 예정
+#    => 워크플로우의 에이전트 노드(workflow_runner.py)에서도 이 파일의 run_events 를 그대로 사용
 #
 # 📌 orchestration 폴더의 역할: "실행" 전담
 #  - 에이전트/워크플로우의 등록·수정(CRUD)은 각 기능 폴더(agent/, 나중에 workflow/)가 담당하고,
 #    실제로 실행하고 순서를 조율하는 코드는 이 폴더에 모음
-#    (예정: 워크플로우 실행 엔진, 실행 기록 저장)
+#    (workflow_runner.py: 워크플로우 실행 엔진 / 예정: 실행 기록 저장)
 #
 # 📌 실행 흐름 (예: "1250원짜리 12개를 7명이 나누면 1인당 얼마야?")
 #  1) 1번째 LLM 호출: 모델이 "calculator 도구를 (1250 * 12) / 7 로 실행해 줘" 라고 요청
@@ -83,9 +83,26 @@ async def _run_tool(prepared: PreparedRun, call: ToolCall) -> ToolResult:
     return await tool_registry.execute_tool(call.name, call.arguments)
 
 
+# [수정] * 실행 함수를 "이벤트 만들기"와 "SSE 글자로 바꾸기" 둘로 나눔 [2026-11-10 16:10]
+# [기존] stream_run_events 하나가 이벤트를 만들면서 바로 SSE 글자("data: {...}")로 바꿔 보냈습니다.
+# [변경] run_events 는 이벤트를 dict 그대로 돌려주고,
+#        stream_run_events 는 그것을 SSE 글자로만 바꿉니다.
+#        => 워크플로우 실행 엔진(workflow_runner.py)이 이벤트 내용을 읽어서
+#           노드 번호를 붙이거나 최종 답변을 모을 수 있도록 하기 위함 (보내는 이벤트 내용은 그대로)
+
+
 #  * 에이전트 실행 => 진행 상황을 SSE 형식으로 하나씩 돌려줌 (라우터의 StreamingResponse가 사용)
 #  - 사용자가 중지하면(연결 끊김) 이 함수도 중간에 멈추고, LLM 서버와의 연결도 함께 닫힘
+#  - aclosing: 중간에 멈추면 안쪽 run_events 도 확실히 닫아 줌 (LLM 서버 연결 정리)
 async def stream_run_events(prepared: PreparedRun) -> AsyncIterator[str]:
+    async with aclosing(run_events(prepared)) as events:
+        async for event in events:
+            yield _sse(event)
+
+
+#  * 에이전트 실행 => 진행 상황을 이벤트(dict)로 하나씩 돌려줌
+#  - 이벤트 종류는 맨 위 설명 참고 (오류도 예외를 던지지 않고 error 이벤트로 돌려줌)
+async def run_events(prepared: PreparedRun) -> AsyncIterator[dict]:
     started = time.perf_counter()
     first_token_ms: int | None = None  # 첫 글자가 올 때까지 걸린 시간
     input_tokens = 0  # 모든 LLM 호출의 토큰 합계
@@ -122,7 +139,7 @@ async def stream_run_events(prepared: PreparedRun) -> AsyncIterator[str]:
                             content_parts.append(event.text)
                         else:
                             reasoning_parts.append(event.text)
-                        yield _sse({"type": event.type, "text": event.text})
+                        yield {"type": event.type, "text": event.text}
                     elif event.type == "tool_call" and event.tool_call:
                         tool_calls.append(event.tool_call)
                     elif event.type == "done":
@@ -140,7 +157,7 @@ async def stream_run_events(prepared: PreparedRun) -> AsyncIterator[str]:
                 #  - 단, 최대 토큰 수에 걸려 생각 도중 잘린 경우(length)는 제외 (생각 중인 글이므로)
                 fallback = "".join(reasoning_parts).strip()
                 if not "".join(content_parts).strip() and fallback and finish_reason != "length":
-                    yield _sse({"type": "content", "text": fallback})
+                    yield {"type": "content", "text": fallback}
                 break
 
             # 3. 모델의 도구 호출 요청을 대화 기록에 추가
@@ -152,25 +169,21 @@ async def stream_run_events(prepared: PreparedRun) -> AsyncIterator[str]:
             # 4. 요청받은 도구를 하나씩 실행하고, 결과를 화면과 대화 기록에 추가
             for index, call in enumerate(tool_calls):
                 event_id = f"{step}-{index}"
-                yield _sse(
-                    {
-                        "type": "tool_call",
-                        "id": event_id,
-                        "name": call.name,
-                        "arguments": call.arguments,
-                    }
-                )
+                yield {
+                    "type": "tool_call",
+                    "id": event_id,
+                    "name": call.name,
+                    "arguments": call.arguments,
+                }
                 result = await _run_tool(prepared, call)
-                yield _sse(
-                    {
-                        "type": "tool_result",
-                        "id": event_id,
-                        "name": call.name,
-                        "result": result.content,
-                        "is_error": result.is_error,
-                        "duration_ms": result.duration_ms,
-                    }
-                )
+                yield {
+                    "type": "tool_result",
+                    "id": event_id,
+                    "name": call.name,
+                    "result": result.content,
+                    "is_error": result.is_error,
+                    "duration_ms": result.duration_ms,
+                }
                 # tool_call_id: 어떤 도구 호출의 결과인지 짝을 맞춤
                 messages.append(
                     ChatMessage(role="tool", content=result.content, tool_call_id=call.id)
@@ -181,20 +194,18 @@ async def stream_run_events(prepared: PreparedRun) -> AsyncIterator[str]:
             finish_reason = "max_iterations"
 
         # 5. 끝 (사용량 합계, 걸린 시간)
-        yield _sse(
-            {
-                "type": "done",
-                "input_tokens": input_tokens,
-                "output_tokens": output_tokens,
-                "finish_reason": finish_reason,
-                "steps": steps,
-                "latency_ms": int((time.perf_counter() - started) * 1000),
-                "first_token_ms": first_token_ms,
-            }
-        )
+        yield {
+            "type": "done",
+            "input_tokens": input_tokens,
+            "output_tokens": output_tokens,
+            "finish_reason": finish_reason,
+            "steps": steps,
+            "latency_ms": int((time.perf_counter() - started) * 1000),
+            "first_token_ms": first_token_ms,
+        }
     except LLMError as err:
-        yield _sse({"type": "error", "message": str(err)})
+        yield {"type": "error", "message": str(err)}
     except Exception:
         # 예상하지 못한 에러: 서버 로그에 자세히 남기고, 화면에는 일반 메시지만 보냄
         logger.exception("에이전트 실행 중 예상하지 못한 오류가 발생했습니다.")
-        yield _sse({"type": "error", "message": "에이전트 실행 중 서버 오류가 발생했습니다."})
+        yield {"type": "error", "message": "에이전트 실행 중 서버 오류가 발생했습니다."}

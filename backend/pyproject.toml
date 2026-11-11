@@ -20,6 +20,7 @@ dependencies = [
     "python-multipart>=0.0.32",
     "qdrant-client>=1.20.0",
     "sqlalchemy>=2.1.6",
+    "tzdata>=2026.5",
     "uvicorn[standard]>=0.54.0",
 ]
 

@@ -16,6 +16,7 @@ import {
 } from 'lucide-react'
 
 import type { UserRole } from '../api/types'
+import { MONITORING_ROLES } from './run'
 import { USER_MANAGER_ROLES } from './user'
 
 //  * 좌측 메뉴(사이드바) 구성
@@ -67,7 +68,8 @@ export const MAIN_MENU: MenuEntry[] = [
     path: '/workflows',
     icon: Workflow,
     description: '드래그 앤 드롭으로 AI 에이전트 워크플로우를 설계하고 실행합니다.',
-    ready: false,
+    // [수정] 워크플로우 메뉴 개발 완료 표시 (기존: false - "준비중" 화면) [2026-11-10 13:40]
+    ready: true,
   },
   {
     key: 'agents',
@@ -99,7 +101,12 @@ export const MAIN_MENU: MenuEntry[] = [
     path: '/monitoring',
     icon: Monitor,
     description: '실행 로그, 토큰 사용량, 응답 시간 등 운영 지표를 확인합니다.',
-    ready: false,
+    // [수정] * 모니터링 메뉴 개발 완료 표시 [2026-11-11 12:50]
+    // [기존] ready: false - "준비중" 화면이었습니다.
+    // [변경] 모니터링 화면을 연결하고, admin, manager 에게만 보이도록 권한을 지정했습니다.
+    //        (일반 사용자는 편집 화면의 실행 패널에서 자기 실행 기록을 볼 수 있음)
+    ready: true,
+    roles: MONITORING_ROLES,
   },
   {
     key: 'templates',

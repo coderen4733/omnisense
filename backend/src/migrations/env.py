@@ -27,6 +27,17 @@ from src.services.iam.auth import models as auth_models  # noqa: F401
 from src.services.iam.user import models as user_models  # noqa: F401
 from src.services.llm import models as llm_models  # noqa: F401
 
+# [수정] * 실행 기록 모델 import 추가 [2026-11-11 11:00]
+# [기존] 실행 기록 테이블이 없었습니다.
+# [변경] 워크플로우 실행 기록(workflow_runs, workflow_run_steps) 테이블도
+#        마이그레이션 대상에 포함합니다.
+from src.services.run import models as run_models  # noqa: F401
+
+# [수정] * 워크플로우 모델 import 추가 [2026-11-10 13:40]
+# [기존] 에이전트, 인증, 사용자, LLM 모델만 alembic이 인식했습니다.
+# [변경] 워크플로우(workflows) 테이블도 마이그레이션 대상에 포함합니다.
+from src.services.workflow import models as workflow_models  # noqa: F401
+
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 # (alembic.ini 파일의 설정값에 접근할 수 있게 해주는 객체)

@@ -95,6 +95,14 @@ class Settings(BaseSettings):
     #  - 스트리밍에서는 "다음 글자 조각이 올 때까지" 기다리는 최대 시간
     llm_request_timeout: int = 120
 
+    # [수정] * 워크플로우 실행 기록 보관 기간 추가 [2026-11-11 11:00]
+    # [기존] 실행 기록을 저장하지 않아서 관련 설정이 없었습니다.
+    # [변경] 실행 기록(workflow_runs)을 며칠 동안 보관할지 정하는 값을 추가했습니다.
+    #  * 워크플로우 실행 기록 보관 기간 (단위: 일)
+    #  - 새 실행을 시작할 때마다 이 기간보다 오래된 기록을 지움 (기록이 끝없이 쌓이지 않도록)
+    #  - 0 으로 설정하면 지우지 않고 계속 보관
+    workflow_run_retention_days: int = Field(default=90, ge=0)
+
     #  * psycopg 드라이버용 DB 주소를 만들어 주는 속성(property)
     #  - 한 곳(여기)에 모아두고 database.py, env.py 모두 settings.async_db_url을 사용
     #  - @property: 함수지만 괄호 없이 settings.async_db_url 처럼 변수처럼 꺼내 쓸 수 있게 해줌

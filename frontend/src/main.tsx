@@ -13,6 +13,10 @@ import './styles/auth.css'
 import './styles/pages.css'
 import './styles/llm.css'
 import './styles/agents.css'
+// [수정] 워크플로우 화면 스타일 추가 (목록 카드는 agents.css 를 함께 사용하므로 그 뒤에) [2026-11-10 13:40]
+import './styles/workflow.css'
+// [수정] 모니터링, 실행 기록 화면 스타일 추가 (실행 기록 상세는 workflow.css 의 캔버스/실행 패널 스타일을 함께 사용) [2026-11-11 12:50]
+import './styles/monitoring.css'
 
 import App from './App'
 

@@ -281,3 +281,281 @@ export type AgentRunEvent =
       first_token_ms: number | null
     }
   | { type: 'error'; message: string } // 오류
+
+// [수정] * 워크플로우 API 타입 추가 [2026-11-10 13:40]
+// [기존] 에이전트까지의 타입만 있었습니다.
+// [변경] 워크플로우 목록/상세/그래프(노드, 연결선) 타입을 추가했습니다.
+//        (backend/src/services/workflow/graph.py, schemas.py 와 같은 모양)
+
+// 노드 종류 (시작 / 에이전트 / 조건 분기 / 끝)
+export type WorkflowNodeType = 'start' | 'agent' | 'condition' | 'end'
+
+// 시작 노드의 입력 칸 1개 (key: {{start.key}} 로 꺼내 쓰는 이름 / label: 화면 표시 이름)
+export interface StartInput {
+  key: string
+  label: string
+  type: 'text' | 'number'
+  required: boolean
+}
+
+// 조건 분기의 비교 방법
+export type ConditionOperator =
+  | 'equals'
+  | 'not_equals'
+  | 'contains'
+  | 'not_contains'
+  | 'greater_than'
+  | 'greater_or_equal'
+  | 'less_than'
+  | 'less_or_equal'
+  | 'is_empty'
+  | 'is_not_empty'
+
+//  * 노드 종류별 설정값 (data)
+//  - [key: string]: unknown => 캔버스 라이브러리(React Flow)가 요구하는 형식 (아무 값이나 더 들어올 수 있음)
+export interface StartNodeData {
+  [key: string]: unknown
+  label: string
+  inputs: StartInput[]
+}
+
+export interface AgentNodeData {
+  [key: string]: unknown
+  label: string
+  agent_id: number | null // 실행할 에이전트 번호 (아직 고르지 않았으면 null)
+  prompt: string // 에이전트에 보낼 내용 ({{ }} 사용 가능)
+}
+
+export interface ConditionNodeData {
+  [key: string]: unknown
+  label: string
+  left: string // 비교할 값
+  operator: ConditionOperator
+  right: string // 기준 값
+}
+
+export interface EndNodeData {
+  [key: string]: unknown
+  label: string
+  output: string // 최종 결과 ({{ }} 사용 가능)
+}
+
+// 저장되는 노드 1개 (type 값에 따라 data 모양이 다름)
+export type WorkflowGraphNode =
+  | { id: string; type: 'start'; position: { x: number; y: number }; data: StartNodeData }
+  | { id: string; type: 'agent'; position: { x: number; y: number }; data: AgentNodeData }
+  | { id: string; type: 'condition'; position: { x: number; y: number }; data: ConditionNodeData }
+  | { id: string; type: 'end'; position: { x: number; y: number }; data: EndNodeData }
+
+// 저장되는 연결선 1개 (sourceHandle: 조건 분기 노드에서 나가는 선만 'true' / 'false')
+export interface WorkflowGraphEdge {
+  id: string
+  source: string
+  target: string
+  sourceHandle: 'true' | 'false' | null
+}
+
+// 워크플로우 그래프 전체
+export interface WorkflowGraph {
+  nodes: WorkflowGraphNode[]
+  edges: WorkflowGraphEdge[]
+}
+
+// 실행 전에 고쳐야 할 문제 1건 (node_id: 문제가 있는 노드 / 워크플로우 전체 문제면 null)
+export interface GraphIssue {
+  node_id: string | null
+  message: string
+}
+
+// 워크플로우 목록용 (WorkflowSummaryRes) - issue_count가 0이면 실행 가능
+export interface WorkflowSummary {
+  id: number
+  name: string
+  description: string | null
+  node_count: number
+  issue_count: number
+  is_active: boolean
+  created_by_email: string | null
+  created_at: string
+  updated_at: string
+}
+
+// 워크플로우 상세 (WorkflowRes) - 편집 화면용
+export interface Workflow extends WorkflowSummary {
+  graph: WorkflowGraph
+  issues: GraphIssue[]
+}
+
+// 워크플로우 만들기 - 요청 (WorkflowCreateReq)
+export interface WorkflowCreateRequest {
+  name: string
+  description: string | null
+}
+
+// 워크플로우 수정 - 요청 (WorkflowUpdateReq) - 보내지 않은 값은 바뀌지 않음
+export type WorkflowUpdateRequest = {
+  name?: string
+  description?: string | null
+  graph?: WorkflowGraph
+  is_active?: boolean
+}
+
+// [수정] * 워크플로우 실행 타입 추가 [2026-11-10 16:50]
+// [기존] 워크플로우 만들기/수정/조회 타입만 있었습니다.
+// [변경] 실행 요청과 실행 중에 받는 이벤트 타입을 추가했습니다.
+//        (backend/src/services/orchestration/workflow_runner.py 맨 위 설명과 같은 모양)
+
+// 워크플로우 실행 - 요청 (WorkflowRunReq) - 시작 노드 입력값 {입력 칸 이름: 값} (숫자 칸도 글자로 보냄)
+export interface WorkflowRunRequest {
+  inputs: Record<string, string>
+}
+
+// 에이전트 실행 이벤트 중 "진행 상황" 4종류 (생각 과정, 답변 조각, 도구 실행 시작/결과)
+export type AgentProgressEvent = Extract<AgentRunEvent, { type: 'reasoning' | 'content' | 'tool_call' | 'tool_result' }>
+
+//  * 노드 1개의 실행 결과 (node_done 이벤트) - node_type 에 따라 들어 있는 값이 다름
+//  - start    : 입력값
+//  - agent    : 실제로 보낸 내용, 최종 답변, 사용량
+//  - condition: {{ }} 를 바꾼 뒤의 비교할 값/기준 값, 비교 결과(true: 참 / false: 거짓)
+//  - end      : 최종 출력
+export type WorkflowNodeResult =
+  | { node_type: 'start'; inputs: Record<string, string> }
+  | {
+      node_type: 'agent'
+      prompt: string
+      answer: string
+      model?: string // 사용한 모델 이름 (실행 기록 기능부터 추가됨 - 그 전 기록에는 없음)
+      input_tokens: number
+      output_tokens: number
+      steps: number // LLM을 호출한 횟수
+      finish_reason: string | null
+    }
+  | { node_type: 'condition'; left: string; operator: ConditionOperator; right: string; result: boolean }
+  | { node_type: 'end'; output: string }
+
+//  * 워크플로우 실행 - 스트리밍으로 받는 이벤트 1개
+//  - 에이전트 노드의 진행 상황은 에이전트 실행 이벤트에 node_id 만 붙어서 옴
+//  - & : 두 타입을 합친 타입 (예: 진행 상황 이벤트 + node_id)
+export type WorkflowRunEvent =
+  | { type: 'run_start'; run_id: number } // 실행 기록 번호 (맨 처음 1번 - 실행 기록 상세로 이동할 때 사용)
+  | { type: 'node_start'; node_id: string; node_type: WorkflowNodeType; label: string } // 노드 실행 시작
+  | (AgentProgressEvent & { node_id: string }) // 에이전트 노드 진행 상황
+  | ({ type: 'node_done'; node_id: string; duration_ms: number } & WorkflowNodeResult) // 노드 실행 끝
+  | {
+      type: 'done' // 워크플로우 끝
+      output: string // 최종 결과 (끝 노드의 출력)
+      end_node_id: string
+      path: string[] // 실제로 실행한 노드 순서
+      input_tokens: number // 모든 에이전트 노드의 합계
+      output_tokens: number
+      latency_ms: number
+    }
+  | { type: 'error'; node_id: string | null; message: string } // 오류 (워크플로우가 그 자리에서 멈춤)
+
+// [수정] * 실행 기록 / 모니터링 타입 추가 [2026-11-11 12:10]
+// [기존] 워크플로우 실행 이벤트 타입까지만 있었습니다.
+// [변경] 실행 기록 목록/상세, 모니터링 통계 타입을 추가하고,
+//        실행 이벤트에 run_start(실행 기록 번호), 에이전트 결과에 model(모델 이름)을 추가했습니다.
+//        (backend/src/services/run/schemas.py 와 같은 모양)
+
+// 실행 상태 (running: 실행 중 / succeeded: 성공 / failed: 실패 / stopped: 사용자가 중지)
+export type RunStatus = 'running' | 'succeeded' | 'failed' | 'stopped'
+
+// 실행 기록 목록 조회 - 요청 (RunListQuery) - 보내지 않은 조건은 거르지 않음
+export interface RunListQuery {
+  workflow_id?: number
+  status?: RunStatus
+  page?: number
+  size?: number
+}
+
+// 실행 기록 1건 - 목록용 (RunSummaryRes) - workflow_id: 워크플로우가 지워졌으면 null
+export interface RunSummary {
+  id: number
+  workflow_id: number | null
+  workflow_name: string
+  status: RunStatus
+  error: string | null
+  input_tokens: number
+  output_tokens: number
+  latency_ms: number | null
+  started_by_email: string | null
+  started_at: string
+  finished_at: string | null
+}
+
+// 실행 기록 목록 - 응답 (RunListRes)
+export interface RunListResponse {
+  items: RunSummary[]
+  total: number
+  page: number
+  size: number
+  total_pages: number
+}
+
+//  * 노드 기록 1개 (RunStepRes)
+//  - result: 노드 종류별 결과 (끝나지 못한 노드는 null)
+//  - parts: 에이전트 노드의 생각 과정, 도구 실행, 답변 조각 (components/agent/RunParts.tsx 의 RunPart 모양)
+export interface RunStep {
+  seq: number
+  node_id: string
+  node_type: WorkflowNodeType
+  label: string
+  status: 'done' | 'error' | 'stopped'
+  result: Record<string, unknown> | null
+  parts: unknown[]
+  error: string | null
+  model_name: string | null
+  input_tokens: number
+  output_tokens: number
+  duration_ms: number | null
+  started_at: string
+}
+
+// 실행 기록 상세 (RunDetailRes) - 실행 당시 그래프 + 입력/결과 + 노드 기록
+export interface RunDetail extends RunSummary {
+  graph: WorkflowGraph
+  inputs: Record<string, string>
+  output: string | null
+  error_node_id: string | null
+  steps: RunStep[]
+}
+
+//  * 모니터링 통계 (RunStatsRes)
+//  - success_rate: 끝난 실행 중 성공 비율 (0~100, 끝난 실행이 없으면 null)
+//  - daily: 날짜별 실행 수 (실행이 없는 날도 0으로 들어 있음, 날짜는 "2026-11-11" 형식)
+export interface RunStats {
+  days: number
+  since: string
+  summary: {
+    total: number
+    succeeded: number
+    failed: number
+    stopped: number
+    running: number
+    success_rate: number | null
+    avg_latency_ms: number | null
+    input_tokens: number
+    output_tokens: number
+  }
+  daily: { date: string; total: number; succeeded: number; failed: number; stopped: number }[]
+  workflows: {
+    workflow_id: number | null
+    workflow_name: string
+    total: number
+    succeeded: number
+    failed: number
+    avg_latency_ms: number | null
+    tokens: number
+    last_run_at: string
+  }[]
+  models: {
+    model_name: string
+    calls: number // 에이전트 노드 실행 횟수
+    errors: number
+    input_tokens: number
+    output_tokens: number
+    tokens: number
+    avg_duration_ms: number | null
+  }[]
+}

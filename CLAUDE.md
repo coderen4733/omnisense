@@ -9,7 +9,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 1. 프로젝트 개요
 - **라이브러리 관리**: uv
-- **라이브러리 사용**: fastapi, uvicorn[standard], httpx, pydantic[email], pydantic-settings, sqlalchemy, alembic, psycopg[binary], celery[redis], prometheus-client, grafana, pyjwt, cryptography, qdrant-client, python-multipart, ruff(개발용) 등 추가/삭제될 때마다 기록 수정 예정
+- **라이브러리 사용**: fastapi, uvicorn[standard], httpx, pydantic[email], pydantic-settings, sqlalchemy, alembic, psycopg[binary], celery[redis], prometheus-client, grafana, pyjwt, cryptography, qdrant-client, python-multipart, tzdata(시간대 정보 - 폐쇄망 대비), ruff(개발용) 등 추가/삭제될 때마다 기록 수정 예정
 - **프로젝트 목적**: AI Agent 오케스트레이션 웹앱 구축
 - **프로젝트 목표 기능**: 원하는 업무 기능을 가진 AI Agent를 드래그 앤 드롭 만으로 워크플로우 연결을 통해 간단하게 생성할 수 있고 관리할 수 있음. 다양한 LLM을 지원하며, 여러 도구들을 MCP를 통해 AI Agent가 활용할 수 있게 만들어 줍니다.
 
@@ -19,7 +19,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **패키지 추가**: `uv add <패키지명>` (개발 도구는 `uv add --dev <패키지명>`)
 
 ## 3. 프론트엔드 개발
-프론트엔드 개발 시에는 `frontend/` 디렉토리에서 진행합니다. (React + TypeScript + Vite, 라우팅 react-router-dom, 아이콘 lucide-react, 폰트 pretendard, LLM 답변 표시 react-markdown·remark-gfm·remark-math·rehype-katex·katex)
+프론트엔드 개발 시에는 `frontend/` 디렉토리에서 진행합니다. (React + TypeScript + Vite, 라우팅 react-router-dom, 아이콘 lucide-react, 폰트 pretendard, LLM 답변 표시 react-markdown·remark-gfm·remark-math·rehype-katex·katex, 워크플로우 캔버스 @xyflow/react)
 - **환경 변수**: `frontend/.env`의 `VITE_API_BASE_URL`(백엔드 주소)을 사용하며, 항목은 `frontend/.env.example` 참고
 - **의존성 설치**: `npm install`
 - **개발 서버 실행**: `npm run dev` → http://localhost:3000 (백엔드 서버가 먼저 켜져 있어야 함)

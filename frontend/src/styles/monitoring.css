@@ -1,0 +1,426 @@
+/*
+ * 모니터링, 실행 기록 화면 스타일
+ *  - 표는 pages.css 의 .data-table, 실행 기록 상세의 캔버스/노드 기록은 workflow.css 를 함께 사용
+ *  - 편집 화면 실행 패널의 "최근 실행 기록"도 여기에 있음
+ */
+
+/* ===== 1. 차트 색 =====
+ *  - 성공(파랑) / 실패(빨강) / 중지(회색)
+ *  - 색맹(적록 색약 등)인 사람도 구분할 수 있는지 계산으로 확인한 색 (빨강-초록 조합은 구분이 어려워 쓰지 않음)
+ *  - 다크 모드는 어두운 배경에서 다시 확인한 색 (성공 파랑만 조금 밝게)
+ */
+:root {
+  --chart-succeeded: #2a78d6;
+  --chart-failed: #d03b3b;
+  --chart-stopped: #8f8f8a;
+}
+
+[data-theme='dark'] {
+  --chart-succeeded: #3987e5;
+}
+
+/* ===== 2. 모니터링: 요약 숫자 ===== */
+
+/* 카드들을 세로로 쌓고 사이에 간격 (모니터링, 실행 기록 상세) */
+.monitor-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.stat-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 20px 24px;
+}
+
+.stat-label {
+  color: var(--color-text-secondary);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+/* 큰 숫자 (숫자 폭을 같게 맞춰 자릿수가 바뀌어도 흔들리지 않게) */
+.stat-value {
+  font-size: 28px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+}
+
+.stat-sub {
+  color: var(--color-text-muted);
+  font-size: 12px;
+}
+
+/* 워크플로우별 | 모델별 (나란히) */
+.monitor-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  gap: 16px;
+}
+
+.card-note {
+  margin: 0;
+  padding: 12px 24px 16px;
+  color: var(--color-text-muted);
+  font-size: 12px;
+}
+
+/* 표 안의 실패/오류 수 */
+.cell-fail {
+  color: var(--tone-red-text);
+  font-size: 12px;
+}
+
+/* 실행 기록 표: 줄 전체를 눌러 상세로 이동 */
+.data-table .row-link {
+  cursor: pointer;
+}
+
+.data-table .cell-error {
+  max-width: 280px;
+  overflow: hidden;
+  color: var(--tone-red-text);
+  font-size: 13px;
+  text-overflow: ellipsis;
+}
+
+/* ===== 3. 날짜별 실행 수 차트 ===== */
+.run-chart {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.run-chart-empty {
+  padding: 48px 0;
+  color: var(--color-text-muted);
+  text-align: center;
+}
+
+/* 범례 (글자는 기본 글자색, 색은 옆의 네모가 담당) */
+.run-chart-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin: 0;
+  padding: 0;
+  color: var(--color-text-secondary);
+  font-size: 13px;
+  list-style: none;
+}
+
+.run-chart-legend li {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.run-chart-swatch {
+  display: inline-block;
+  flex: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  background: var(--chart-swatch);
+}
+
+.is-succeeded {
+  --chart-swatch: var(--chart-succeeded);
+}
+
+.is-failed {
+  --chart-swatch: var(--chart-failed);
+}
+
+.is-stopped {
+  --chart-swatch: var(--chart-stopped);
+}
+
+/* 그림 영역: 왼쪽 눈금 글자 자리(40px) + 막대 */
+.run-chart-plot {
+  position: relative;
+  height: 200px;
+  padding-left: 40px;
+}
+
+/* 가로 보조선 (흐리게 - 막대보다 눈에 띄지 않도록) */
+.run-chart-grid {
+  position: absolute;
+  inset: 0 0 0 40px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  pointer-events: none;
+}
+
+.run-chart-gridline {
+  position: relative;
+  border-top: 1px solid var(--color-border);
+}
+
+/* 맨 아래(0) 선은 기준선이라 조금 진하게 */
+.run-chart-gridline:last-child {
+  border-top-color: var(--color-border-strong);
+}
+
+.run-chart-gridline span {
+  position: absolute;
+  right: calc(100% + 8px);
+  top: -8px;
+  color: var(--color-text-muted);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+.run-chart-bars {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  gap: 4px;
+  height: 100%;
+}
+
+/* 날짜 1칸 (위아래 전체가 마우스 대상) */
+.run-chart-col {
+  position: relative;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  min-width: 0;
+  border-radius: 6px;
+  outline: none;
+}
+
+.run-chart-col.is-active {
+  background: color-mix(in srgb, var(--color-text) 5%, transparent);
+}
+
+.run-chart-col:focus-visible {
+  box-shadow: 0 0 0 2px var(--color-accent);
+}
+
+/* 쌓은 막대 (아래부터 성공 / 실패 / 중지, 조각 사이 2px 틈) */
+.run-chart-stack {
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 2px;
+  width: 100%;
+  max-width: 36px;
+}
+
+.run-chart-seg {
+  min-height: 2px;
+  background: var(--chart-swatch);
+}
+
+/* 막대 맨 위 조각만 위쪽 모서리를 둥글게 (기준선 쪽은 각지게) */
+.run-chart-seg:last-child {
+  border-radius: 4px 4px 0 0;
+}
+
+/* 숫자 말풍선 */
+.run-chart-tip {
+  position: absolute;
+  bottom: calc(100% - 40px);
+  left: 50%;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 130px;
+  padding: 8px 10px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  color: var(--color-text);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+/* 오른쪽 절반의 막대는 말풍선을 왼쪽으로 (화면 밖으로 나가지 않도록) */
+.run-chart-tip.is-left {
+  left: auto;
+  right: 50%;
+}
+
+.run-chart-tip span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--color-text-secondary);
+}
+
+/* 가로축 날짜 (막대와 같은 칸 나누기) */
+.run-chart-axis {
+  display: flex;
+  gap: 4px;
+  padding-left: 40px;
+  color: var(--color-text-muted);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+.run-chart-axis span {
+  flex: 1;
+  min-width: 0;
+  overflow: visible;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.run-chart-table summary {
+  color: var(--color-text-secondary);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.run-chart-table .data-table {
+  margin-top: 8px;
+}
+
+.run-chart-table .data-table td,
+.run-chart-table .data-table th {
+  height: 36px;
+}
+
+/* ===== 4. 실행 기록 상세 ===== */
+.run-detail-summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 24px;
+}
+
+.run-detail-summary dl {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 32px;
+  margin: 0;
+}
+
+.run-detail-summary dt {
+  color: var(--color-text-muted);
+  font-size: 12px;
+}
+
+.run-detail-summary dd {
+  margin: 4px 0 0;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* 캔버스 | 노드 기록 */
+.run-detail-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 420px;
+  gap: 12px;
+  height: calc(100vh - var(--header-height) - 260px);
+  min-height: 480px;
+}
+
+.run-detail-canvas {
+  min-height: 0;
+}
+
+.run-detail-panel {
+  min-height: 0;
+}
+
+/* ===== 5. 편집 화면 실행 패널: 실행 기록 링크 + 최근 실행 기록 ===== */
+.wf-run-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: 0;
+}
+
+.wf-run-recent {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 12px;
+  border-top: 1px solid var(--color-border);
+  font-size: 13px;
+}
+
+.wf-run-recent-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.wf-run-recent ul {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.wf-run-recent a {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: var(--radius-sm);
+  color: inherit;
+  text-decoration: none;
+}
+
+.wf-run-recent a:hover {
+  background: var(--color-surface-muted);
+}
+
+.wf-run-recent-time {
+  flex: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ===== 6. 화면 폭에 따른 조정 ===== */
+@media (max-width: 1200px) {
+  .stat-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .monitor-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .run-detail-body {
+    grid-template-columns: minmax(0, 1fr) 360px;
+  }
+}
+
+@media (max-width: 960px) {
+  .run-detail-body {
+    grid-template-columns: minmax(0, 1fr);
+    height: auto;
+  }
+
+  .run-detail-canvas {
+    height: 50vh;
+  }
+}
+
+@media (max-width: 600px) {
+  .stat-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

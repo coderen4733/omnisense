@@ -292,17 +292,24 @@ def read_tools() -> list[ToolRes]:
 # ============================================================
 
 
-#  * 에이전트 실행 준비 (실행 가능 여부 확인 + 접속 정보 + 메시지/옵션/도구 변환)
-#  - 스트리밍 응답은 라우터 함수가 끝난 "뒤에" 실행되므로, DB 작업은 여기서 모두 끝냄
-#    (llm/service.py 의 PreparedChat 설명 참고)
-async def prepare_run(
+# [수정] * 실행 준비를 두 함수로 나눔 [2026-11-10 16:15]
+# [기존] prepare_run 하나에서 에이전트 조회, 실행 가능 여부 확인, 메시지 만들기를 모두 했습니다.
+# [변경] "에이전트 1개를 실행할 수 있게 준비"하는 부분을 prepare_agent_run 으로 떼어냈습니다.
+#        => 워크플로우의 에이전트 노드(workflow/service.py)도 같은 확인 과정을 그대로 사용
+#        prepare_run(에이전트 테스트 실행 API)의 동작은 그대로입니다.
+
+
+#  * 에이전트 1개 실행 준비 (실행 가능 여부 확인 + 접속 정보 + 메시지/옵션/도구 변환)
+#  - messages: 시스템 프롬프트 뒤에 붙일 대화
+#    (워크플로우에서는 빈 목록을 넘기고, 노드를 실행할 때 질문을 붙임)
+#  - 실행할 수 없으면 에러(400) - 메시지는 화면에 그대로 보여줄 수 있는 문장
+#  - commit은 하지 않음 (호출하는 쪽에서 DB 작업을 모두 마친 뒤 함)
+async def prepare_agent_run(
     session: AsyncSession,
-    agent_id: int,
-    dto: AgentRunReq,
-    current_user: User,
+    agent: Agent,
+    messages: list[ChatMessage],
 ) -> PreparedRun:
     # 1. 실행할 수 있는 에이전트인지 확인
-    agent = await _get_agent_or_404(session, agent_id, current_user)
     if not agent.is_active:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -313,14 +320,8 @@ async def prepare_run(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="연결된 LLM 모델이 삭제되었습니다. 에이전트 설정에서 모델을 다시 선택해 주세요.",
         )
-    # 2. 마지막 메시지는 사용자 질문이어야 함
-    if dto.messages[-1].role != "user":
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="마지막 메시지는 사용자 질문이어야 합니다.",
-        )
 
-    # 3. 모델 확인 + 접속 정보 만들기 (모델/공급자가 비활성화면 400)
+    # 2. 모델 확인 + 접속 정보 만들기 (모델/공급자가 비활성화면 400)
     model, connection = await llm_service.get_usable_model_connection(session, agent.llm_model_id)
     #  * 도구 설명 목록
     #  - 저장한 뒤에 모델 설정에서 "도구 호출 지원"을 끈 경우에도 막음
@@ -334,18 +335,16 @@ async def prepare_run(
             ),
         )
 
-    # 4. 메시지 만들기 (시스템 프롬프트 + 지금까지의 대화)
-    messages: list[ChatMessage] = []
+    # 3. 메시지 만들기 (시스템 프롬프트 + 넘겨받은 대화)
+    run_messages: list[ChatMessage] = []
     if agent.system_prompt:
-        messages.append(ChatMessage(role="system", content=agent.system_prompt))
-    messages.extend(
-        ChatMessage(role=message.role, content=message.content) for message in dto.messages
-    )
+        run_messages.append(ChatMessage(role="system", content=agent.system_prompt))
+    run_messages.extend(messages)
 
-    prepared = PreparedRun(
+    return PreparedRun(
         connection=connection,
         model_name=model.model_id,
-        messages=messages,
+        messages=run_messages,
         params=GenerationParams(
             temperature=agent.temperature,
             max_tokens=agent.max_tokens,
@@ -356,6 +355,32 @@ async def prepare_run(
         tools=tools,
         max_iterations=agent.max_iterations,
     )
-    # 5. DB 작업 끝 => 트랜잭션 종료 (LLM 응답을 기다리는 동안 DB 연결을 붙잡지 않도록)
+
+
+#  * 에이전트 테스트 실행 준비 (에이전트 실행 API용)
+#  - 스트리밍 응답은 라우터 함수가 끝난 "뒤에" 실행되므로, DB 작업은 여기서 모두 끝냄
+#    (llm/service.py 의 PreparedChat 설명 참고)
+async def prepare_run(
+    session: AsyncSession,
+    agent_id: int,
+    dto: AgentRunReq,
+    current_user: User,
+) -> PreparedRun:
+    # 1. 에이전트 조회 (없거나, 일반 사용자에게 숨겨진 에이전트면 404)
+    agent = await _get_agent_or_404(session, agent_id, current_user)
+    # 2. 마지막 메시지는 사용자 질문이어야 함
+    if dto.messages[-1].role != "user":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="마지막 메시지는 사용자 질문이어야 합니다.",
+        )
+
+    # 3. 실행 준비 (실행 가능 여부 확인 + 시스템 프롬프트 + 지금까지의 대화)
+    prepared = await prepare_agent_run(
+        session,
+        agent,
+        [ChatMessage(role=message.role, content=message.content) for message in dto.messages],
+    )
+    # 4. DB 작업 끝 => 트랜잭션 종료 (LLM 응답을 기다리는 동안 DB 연결을 붙잡지 않도록)
     await session.commit()
     return prepared
